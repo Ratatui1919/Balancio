@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BORGY · Firebase синхронізація</title>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (Compat версії - працюють без import) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
@@ -66,6 +66,7 @@
             display: flex;
             gap: 15px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .user-email {
@@ -358,6 +359,16 @@
             border-color: var(--primary);
         }
 
+        .debt-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .debt-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
         .debt-amount {
             font-weight: 700;
             padding: 6px 15px;
@@ -386,6 +397,11 @@
             border-radius: 40px;
             font-size: 0.95rem;
             flex: 1;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .btn-add {
@@ -463,6 +479,17 @@
             margin-bottom: 20px;
         }
 
+        .modal-input, .modal-select {
+            width: 100%;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 14px 16px;
+            border-radius: 40px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
         .modal-buttons {
             display: flex;
             gap: 10px;
@@ -500,9 +527,13 @@
             }
             .btn {
                 width: 100%;
+                justify-content: center;
             }
             .debts-grid {
                 grid-template-columns: 1fr;
+            }
+            .goal-actions {
+                flex-direction: column;
             }
         }
     </style>
@@ -669,30 +700,18 @@
     </div>
 
     <script>
-        // 🔥 ТВІЙ КОНФІГ FIREBASE (ТРЕБА ЗАМІНИТИ!)
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+        // ТВІЙ КОНФІГ FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6hldl2mZS1xZe1Z8ZERWM19kpCjAqfwQ",
+            authDomain: "borgi-60d8d.firebaseapp.com",
+            projectId: "borgi-60d8d",
+            storageBucket: "borgi-60d8d.firebasestorage.app",
+            messagingSenderId: "361694792367",
+            appId: "1:361694792367:web:ccbfc861668a568e1e225a",
+            measurementId: "G-24DJQ1KSG8"
+        };
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyD6hldl2mZS1xZe1Z8ZERWM19kpCjAqfwQ",
-  authDomain: "borgi-60d8d.firebaseapp.com",
-  projectId: "borgi-60d8d",
-  storageBucket: "borgi-60d8d.firebasestorage.app",
-  messagingSenderId: "361694792367",
-  appId: "1:361694792367:web:ccbfc861668a568e1e225a",
-  measurementId: "G-24DJQ1KSG8"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-        // Ініціалізація Firebase
+        // Ініціалізація Firebase (Compat API)
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
@@ -716,7 +735,6 @@ const analytics = getAnalytics(app);
         const userEmail = document.getElementById('userEmail');
         const mainContent = document.getElementById('mainContent');
         const footer = document.getElementById('footer');
-        const authSection = document.getElementById('authSection');
 
         // Символ валюти
         function getSymbol(currency) {
@@ -735,6 +753,11 @@ const analytics = getAnalytics(app);
                 if (m === '>') return '&gt;';
                 return m;
             });
+        }
+
+        // Генератор ID
+        function genId() {
+            return Date.now() + '-' + Math.random().toString(36).substring(2, 9);
         }
 
         // Оновлення статистики
@@ -905,7 +928,6 @@ const analytics = getAnalytics(app);
                     state.goals = data.goals || [];
                     state.debts = data.debts || { owed: [], owe: [] };
                 } else {
-                    // Якщо немає даних — починаємо з порожнього стану
                     state.goals = [];
                     state.debts = { owed: [], owe: [] };
                 }
@@ -934,11 +956,6 @@ const analytics = getAnalytics(app);
                 renderDebts();
                 updateStats();
             });
-        }
-
-        // Генератор ID
-        function genId() {
-            return Date.now() + '-' + Math.random().toString(36).substring(2, 9);
         }
 
         // Глобальні функції для цілей
@@ -1110,7 +1127,10 @@ const analytics = getAnalytics(app);
         // Аутентифікація
         loginBtn.addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider);
+            auth.signInWithPopup(provider).catch(error => {
+                console.error('Помилка входу:', error);
+                alert('Помилка входу: ' + error.message);
+            });
         });
 
         logoutBtn.addEventListener('click', () => {
@@ -1150,4 +1170,3 @@ const analytics = getAnalytics(app);
     </script>
 </body>
 </html>
-
