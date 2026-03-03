@@ -1,1 +1,1197 @@
-1
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BORGY · менеджер боргів</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        :root {
+            --bg: #0a0c0f;
+            --surface: #15181c;
+            --surface-light: #1e2228;
+            --primary: #6c5ce7;
+            --primary-dark: #5649c0;
+            --success: #00b894;
+            --danger: #d63031;
+            --warning: #f39c12;
+            --text: #e9ecef;
+            --text-secondary: #8b949e;
+            --border: #2d333a;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app {
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        /* Хедер */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-left: 10px;
+        }
+
+        .user-info {
+            background: var(--surface);
+            padding: 12px 24px;
+            border-radius: 60px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #userId {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* PDF кнопки */
+        .pdf-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn-pdf {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.2s;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-pdf.save {
+            background: #1e2a2a;
+            border-color: #004d40;
+            color: #00b894;
+        }
+
+        .btn-pdf.load {
+            background: #1e1f2a;
+            border-color: #4834d4;
+            color: #a29bfe;
+        }
+
+        .btn-pdf:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+        }
+
+        /* Статистика */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 24px;
+            transition: 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary);
+        }
+
+        .stat-title {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+        }
+
+        .stat-total {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+            color: var(--primary);
+        }
+
+        /* Цілі */
+        .goals-section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+            color: var(--text);
+        }
+
+        .btn-create {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.2s;
+        }
+
+        .btn-create:hover {
+            background: var(--primary-dark);
+            transform: scale(0.98);
+        }
+
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .goal-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .goal-delete {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(214, 48, 49, 0.1);
+            color: var(--danger);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--danger);
+            transition: 0.2s;
+        }
+
+        .goal-delete:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .goal-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            padding-right: 40px;
+        }
+
+        .goal-currency {
+            color: var(--primary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .goal-target {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--success);
+            margin: 10px 0;
+        }
+
+        .goal-progress {
+            margin: 15px 0;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            background: var(--surface-light);
+            height: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), #00cec9);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+
+        .goal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .input-group {
+            flex: 2;
+            display: flex;
+            background: var(--surface-light);
+            border-radius: 60px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .input-group input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px 15px;
+            color: var(--text);
+        }
+
+        .input-group input:focus {
+            outline: none;
+        }
+
+        .input-group button {
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 40px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .btn-withdraw {
+            flex: 1;
+            background: rgba(214, 48, 49, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 10px;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-withdraw:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Борги */
+        .debts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .debt-column {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 24px;
+        }
+
+        .debt-column h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .debt-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .debt-item {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .debt-item:hover {
+            border-color: var(--primary);
+        }
+
+        .debt-name {
+            font-weight: 600;
+        }
+
+        .debt-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .debt-amount {
+            font-weight: 700;
+            background: var(--surface);
+            padding: 6px 15px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+            color: var(--primary);
+        }
+
+        .debt-amount.owe {
+            color: var(--danger);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        input, select {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 16px;
+            border-radius: 60px;
+            font-size: 0.95rem;
+            flex: 1;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+
+        .btn-add:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Футер */
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            color: var(--text-secondary);
+        }
+
+        .btn-clear {
+            background: rgba(214, 48, 49, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 12px 28px;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-clear:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Модалка */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 32px;
+            width: 90%;
+            max-width: 450px;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 60px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal-btn.create {
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: var(--surface-light);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        /* Адаптивність */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .pdf-section {
+                flex-direction: column;
+            }
+            
+            .debts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Хедер -->
+        <div class="header">
+            <div class="logo">
+                <h1>BORGY <span>· менеджер боргів</span></h1>
+            </div>
+            <div class="user-info">
+                <span>👤 Ваш ID:</span>
+                <span id="userId"></span>
+            </div>
+        </div>
+
+        <!-- PDF кнопки -->
+        <div class="pdf-section">
+            <button class="btn-pdf save" id="savePDFBtn">
+                💾 ЗБЕРЕГТИ БЕКАП
+            </button>
+            <button class="btn-pdf load" id="loadPDFBtn">
+                📂 ВІДНОВИТИ З БЕКАПУ
+            </button>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">МЕНІ ВИНЕНІ</div>
+                <div class="stat-total" id="totalOwed">0 ₴</div>
+                <div class="stat-item">
+                    <span class="stat-label">Гривня (UAH):</span>
+                    <span class="stat-value" id="owedUAH">0 ₴</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Євро (EUR):</span>
+                    <span class="stat-value" id="owedEUR">0 €</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Долар (USD):</span>
+                    <span class="stat-value" id="owedUSD">0 $</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Я ВИНЕН</div>
+                <div class="stat-total" id="totalOwe">0 ₴</div>
+                <div class="stat-item">
+                    <span class="stat-label">Гривня (UAH):</span>
+                    <span class="stat-value" id="oweUAH">0 ₴</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Євро (EUR):</span>
+                    <span class="stat-value" id="oweEUR">0 €</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Долар (USD):</span>
+                    <span class="stat-value" id="oweUSD">0 $</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">ЧИСТИЙ РЕЗУЛЬТАТ</div>
+                <div class="stat-total" id="totalNet">0 ₴</div>
+                <div class="stat-item">
+                    <span class="stat-label">Гривня:</span>
+                    <span class="stat-value" id="netUAH">0 ₴</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Євро:</span>
+                    <span class="stat-value" id="netEUR">0 €</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Долар:</span>
+                    <span class="stat-value" id="netUSD">0 $</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Цілі -->
+        <div class="goals-section">
+            <div class="section-header">
+                <h2>🎯 МОЇ ЦІЛІ</h2>
+                <button class="btn-create" id="createGoalBtn">
+                    + НОВА ЦІЛЬ
+                </button>
+            </div>
+            <div class="goals-grid" id="goalsContainer"></div>
+        </div>
+
+        <!-- Борги -->
+        <div class="debts-grid">
+            <!-- Мені винені -->
+            <div class="debt-column">
+                <h3>📥 МЕНІ ВИНЕНІ</h3>
+                <ul class="debt-list" id="owedList"></ul>
+                <div class="form-row">
+                    <input type="text" id="owedName" placeholder="Ім'я">
+                    <input type="number" id="owedAmount" placeholder="Сума" step="0.01">
+                </div>
+                <div class="form-row">
+                    <select id="owedCurrency">
+                        <option value="UAH">🇺🇦 UAH</option>
+                        <option value="EUR">🇪🇺 EUR</option>
+                        <option value="USD">🇺🇸 USD</option>
+                    </select>
+                    <input type="text" id="owedDesc" placeholder="Опис">
+                </div>
+                <button class="btn-add" id="addOwedBtn">+ ДОДАТИ</button>
+            </div>
+
+            <!-- Я винен -->
+            <div class="debt-column">
+                <h3>📤 Я ВИНЕН</h3>
+                <ul class="debt-list" id="oweList"></ul>
+                <div class="form-row">
+                    <input type="text" id="oweName" placeholder="Кому">
+                    <input type="number" id="oweAmount" placeholder="Сума" step="0.01">
+                </div>
+                <div class="form-row">
+                    <select id="oweCurrency">
+                        <option value="UAH">🇺🇦 UAH</option>
+                        <option value="EUR">🇪🇺 EUR</option>
+                        <option value="USD">🇺🇸 USD</option>
+                    </select>
+                    <input type="text" id="oweDesc" placeholder="Опис">
+                </div>
+                <button class="btn-add" id="addOweBtn">+ ДОДАТИ</button>
+            </div>
+        </div>
+
+        <!-- Футер -->
+        <div class="footer">
+            <span>⚡ Дані зберігаються локально у вашому браузері</span>
+            <button class="btn-clear" id="clearAllBtn">ОЧИСТИТИ ВСЕ</button>
+        </div>
+    </div>
+
+    <!-- Модалка створення цілі -->
+    <div class="modal" id="goalModal">
+        <div class="modal-content">
+            <h2>СТВОРИТИ ЦІЛЬ</h2>
+            <input type="text" class="modal-input" id="goalName" placeholder="Назва (наприклад, ТЕЛЕФОН)">
+            <select class="modal-select" id="goalCurrency">
+                <option value="UAH">🇺🇦 ГРИВНЯ (UAH)</option>
+                <option value="EUR">🇪🇺 ЄВРО (EUR)</option>
+                <option value="USD">🇺🇸 ДОЛАР (USD)</option>
+            </select>
+            <input type="number" class="modal-input" id="goalTarget" placeholder="Цільова сума" min="1" step="1">
+            <div class="modal-buttons">
+                <button class="modal-btn create" id="saveGoalBtn">СТВОРИТИ</button>
+                <button class="modal-btn cancel" id="cancelGoalBtn">СКАСУВАТИ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Генеруємо унікальний ID для користувача (якщо немає)
+            let userId = localStorage.getItem('bordy_user_id');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('bordy_user_id', userId);
+            }
+            document.getElementById('userId').textContent = userId.substring(0, 8) + '...';
+
+            // Ключ для зберігання даних конкретного користувача
+            const STORAGE_KEY = 'bordy_data_' + userId;
+
+            // Стан програми
+            let state = {
+                goals: [],
+                debts: {
+                    owed: [],
+                    owe: []
+                }
+            };
+
+            // Завантаження
+            function load() {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        state = {
+                            goals: Array.isArray(parsed.goals) ? parsed.goals : [],
+                            debts: {
+                                owed: Array.isArray(parsed.debts?.owed) ? parsed.debts.owed : [],
+                                owe: Array.isArray(parsed.debts?.owe) ? parsed.debts.owe : []
+                            }
+                        };
+                    } else {
+                        // Демо-дані
+                        state.goals = [
+                            { id: 'g1', name: 'ТЕЛЕФОН', currency: 'EUR', target: 650, saved: 50 }
+                        ];
+                        state.debts = {
+                            owed: [
+                                { id: '1', name: 'Саня', amount: 3400, currency: 'UAH', description: '' },
+                                { id: '4', name: 'Петро', amount: 111, currency: 'EUR', description: '' }
+                            ],
+                            owe: [
+                                { id: '2', name: 'Деніс', amount: 155, currency: 'EUR', description: '' },
+                                { id: '3', name: 'Мама', amount: 2000, currency: 'UAH', description: '' }
+                            ]
+                        };
+                    }
+                } catch (e) {}
+            }
+
+            // Збереження
+            function save() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            }
+
+            // Генератор ID
+            function genId() {
+                return Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+            }
+
+            // Символ валюти
+            function getSymbol(currency) {
+                if (currency === 'UAH') return '₴';
+                if (currency === 'EUR') return '€';
+                if (currency === 'USD') return '$';
+                return '?';
+            }
+
+            // Екранування
+            function esc(str) {
+                if (!str) return '';
+                return String(str).replace(/[&<>]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    return m;
+                });
+            }
+
+            // Оновлення статистики
+            function updateStats() {
+                let owedUAH = 0, owedEUR = 0, owedUSD = 0;
+                let oweUAH = 0, oweEUR = 0, oweUSD = 0;
+
+                state.debts.owed.forEach(item => {
+                    const amt = Number(item.amount) || 0;
+                    if (item.currency === 'UAH') owedUAH += amt;
+                    else if (item.currency === 'EUR') owedEUR += amt;
+                    else if (item.currency === 'USD') owedUSD += amt;
+                });
+
+                state.debts.owe.forEach(item => {
+                    const amt = Number(item.amount) || 0;
+                    if (item.currency === 'UAH') oweUAH += amt;
+                    else if (item.currency === 'EUR') oweEUR += amt;
+                    else if (item.currency === 'USD') oweUSD += amt;
+                });
+
+                document.getElementById('owedUAH').innerHTML = owedUAH.toFixed(2) + ' ₴';
+                document.getElementById('owedEUR').innerHTML = owedEUR.toFixed(2) + ' €';
+                document.getElementById('owedUSD').innerHTML = owedUSD.toFixed(2) + ' $';
+                document.getElementById('totalOwed').innerHTML = (owedUAH + owedEUR + owedUSD).toFixed(2) + ' ₴';
+
+                document.getElementById('oweUAH').innerHTML = oweUAH.toFixed(2) + ' ₴';
+                document.getElementById('oweEUR').innerHTML = oweEUR.toFixed(2) + ' €';
+                document.getElementById('oweUSD').innerHTML = oweUSD.toFixed(2) + ' $';
+                document.getElementById('totalOwe').innerHTML = (oweUAH + oweEUR + oweUSD).toFixed(2) + ' ₴';
+
+                const netUAH = owedUAH - oweUAH;
+                const netEUR = owedEUR - oweEUR;
+                const netUSD = owedUSD - oweUSD;
+                const totalNet = (owedUAH + owedEUR + owedUSD) - (oweUAH + oweEUR + oweUSD);
+
+                document.getElementById('netUAH').innerHTML = (netUAH >= 0 ? '+' : '') + netUAH.toFixed(2) + ' ₴';
+                document.getElementById('netEUR').innerHTML = (netEUR >= 0 ? '+' : '') + netEUR.toFixed(2) + ' €';
+                document.getElementById('netUSD').innerHTML = (netUSD >= 0 ? '+' : '') + netUSD.toFixed(2) + ' $';
+                document.getElementById('totalNet').innerHTML = (totalNet >= 0 ? '+' : '') + totalNet.toFixed(2) + ' ₴';
+            }
+
+            // Рендер цілей
+            function renderGoals() {
+                const container = document.getElementById('goalsContainer');
+                
+                if (state.goals.length === 0) {
+                    container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 60px; background: var(--surface); border-radius: 28px; color: var(--text-secondary); border: 1px dashed var(--border);">➕ Створіть свою першу ціль</div>';
+                    return;
+                }
+
+                let html = '';
+                state.goals.forEach(goal => {
+                    const symbol = getSymbol(goal.currency);
+                    const percent = goal.target > 0 ? (goal.saved / goal.target) * 100 : 0;
+                    const remaining = Math.max(0, goal.target - goal.saved);
+
+                    html += `
+                        <div class="goal-card" data-id="${goal.id}">
+                            <div class="goal-delete" onclick="deleteGoal('${goal.id}')">✕</div>
+                            <div class="goal-name">${esc(goal.name)}</div>
+                            <div class="goal-currency">${goal.currency}</div>
+                            <div class="goal-target">${goal.target.toFixed(0)} ${symbol}</div>
+                            
+                            <div class="goal-progress">
+                                <div class="progress-stats">
+                                    <span>Накопичено: ${goal.saved.toFixed(2)} ${symbol}</span>
+                                    <span>Залишилось: ${remaining.toFixed(2)} ${symbol}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${Math.min(percent, 100)}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="goal-actions">
+                                <div class="input-group">
+                                    <input type="number" id="add-${goal.id}" placeholder="Сума" step="1" min="0">
+                                    <button onclick="addToGoal('${goal.id}')">+</button>
+                                </div>
+                                <button class="btn-withdraw" onclick="withdrawFromGoal('${goal.id}')">ЗНЯТИ</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            }
+
+            // Глобальні функції для цілей
+            window.addToGoal = function(goalId) {
+                const input = document.getElementById(`add-${goalId}`);
+                const amount = parseFloat(input.value);
+                if (isNaN(amount) || amount <= 0) {
+                    alert('Введіть суму');
+                    return;
+                }
+
+                const goal = state.goals.find(g => g.id === goalId);
+                if (goal) {
+                    goal.saved += amount;
+                    save();
+                    renderGoals();
+                    updateStats();
+                }
+                input.value = '';
+            };
+
+            window.withdrawFromGoal = function(goalId) {
+                const amount = parseFloat(prompt('Скільки зняти?', '0'));
+                if (isNaN(amount) || amount <= 0) return;
+
+                const goal = state.goals.find(g => g.id === goalId);
+                if (goal) {
+                    if (amount > goal.saved) {
+                        alert('Недостатньо коштів');
+                        return;
+                    }
+                    goal.saved -= amount;
+                    save();
+                    renderGoals();
+                    updateStats();
+                }
+            };
+
+            window.deleteGoal = function(goalId) {
+                if (confirm('Видалити цю ціль?')) {
+                    state.goals = state.goals.filter(g => g.id !== goalId);
+                    save();
+                    renderGoals();
+                    updateStats();
+                }
+            };
+
+            // Рендер боргів
+            function renderDebts() {
+                const owedList = document.getElementById('owedList');
+                if (state.debts.owed.length === 0) {
+                    owedList.innerHTML = '<li style="color: var(--text-secondary); text-align: center; padding: 20px;">Поки ніхто не винен</li>';
+                } else {
+                    let html = '';
+                    state.debts.owed.forEach(item => {
+                        const symbol = getSymbol(item.currency);
+                        html += `
+                            <li class="debt-item" data-id="${item.id}">
+                                <div>
+                                    <div class="debt-name">${esc(item.name)}</div>
+                                    <div class="debt-desc">${esc(item.description) || ''}</div>
+                                </div>
+                                <div class="debt-amount">${Number(item.amount).toFixed(2)} ${symbol}</div>
+                            </li>
+                        `;
+                    });
+                    owedList.innerHTML = html;
+
+                    document.querySelectorAll('#owedList .debt-item').forEach(el => {
+                        el.addEventListener('click', function() {
+                            const id = this.dataset.id;
+                            if (id && confirm('Видалити цей борг?')) {
+                                state.debts.owed = state.debts.owed.filter(d => d.id !== id);
+                                save();
+                                renderDebts();
+                                updateStats();
+                            }
+                        });
+                    });
+                }
+
+                const oweList = document.getElementById('oweList');
+                if (state.debts.owe.length === 0) {
+                    oweList.innerHTML = '<li style="color: var(--text-secondary); text-align: center; padding: 20px;">Поки нікому не винен</li>';
+                } else {
+                    let html = '';
+                    state.debts.owe.forEach(item => {
+                        const symbol = getSymbol(item.currency);
+                        html += `
+                            <li class="debt-item" data-id="${item.id}">
+                                <div>
+                                    <div class="debt-name">${esc(item.name)}</div>
+                                    <div class="debt-desc">${esc(item.description) || ''}</div>
+                                </div>
+                                <div class="debt-amount owe">${Number(item.amount).toFixed(2)} ${symbol}</div>
+                            </li>
+                        `;
+                    });
+                    oweList.innerHTML = html;
+
+                    document.querySelectorAll('#oweList .debt-item').forEach(el => {
+                        el.addEventListener('click', function() {
+                            const id = this.dataset.id;
+                            if (id && confirm('Видалити цей борг?')) {
+                                state.debts.owe = state.debts.owe.filter(d => d.id !== id);
+                                save();
+                                renderDebts();
+                                updateStats();
+                            }
+                        });
+                    });
+                }
+            }
+
+            // Додавання боргів
+            function addOwed() {
+                const name = document.getElementById('owedName').value.trim();
+                const amount = parseFloat(document.getElementById('owedAmount').value);
+                const currency = document.getElementById('owedCurrency').value;
+                const desc = document.getElementById('owedDesc').value.trim();
+
+                if (!name || isNaN(amount) || amount <= 0) {
+                    alert('Заповніть всі поля');
+                    return;
+                }
+
+                state.debts.owed.push({
+                    id: genId(),
+                    name: name,
+                    amount: amount,
+                    currency: currency,
+                    description: desc
+                });
+
+                save();
+                
+                document.getElementById('owedName').value = '';
+                document.getElementById('owedAmount').value = '';
+                document.getElementById('owedDesc').value = '';
+                
+                renderDebts();
+                updateStats();
+            }
+
+            function addOwe() {
+                const name = document.getElementById('oweName').value.trim();
+                const amount = parseFloat(document.getElementById('oweAmount').value);
+                const currency = document.getElementById('oweCurrency').value;
+                const desc = document.getElementById('oweDesc').value.trim();
+
+                if (!name || isNaN(amount) || amount <= 0) {
+                    alert('Заповніть всі поля');
+                    return;
+                }
+
+                state.debts.owe.push({
+                    id: genId(),
+                    name: name,
+                    amount: amount,
+                    currency: currency,
+                    description: desc
+                });
+
+                save();
+                
+                document.getElementById('oweName').value = '';
+                document.getElementById('oweAmount').value = '';
+                document.getElementById('oweDesc').value = '';
+                
+                renderDebts();
+                updateStats();
+            }
+
+            // Очистка всього
+            function clearAll() {
+                if (confirm('Видалити ВСІ дані? Це незворотньо.')) {
+                    state = {
+                        goals: [],
+                        debts: {
+                            owed: [],
+                            owe: []
+                        }
+                    };
+                    save();
+                    renderGoals();
+                    renderDebts();
+                    updateStats();
+                }
+            }
+
+            // PDF функції
+            function saveToPDF() {
+                const dataToSave = {
+                    goals: state.goals,
+                    debts: state.debts
+                };
+
+                const jsonString = JSON.stringify(dataToSave, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bordy-backup-${new Date().toLocaleDateString()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert('✅ Бекап збережено! Файл можна зберігати де завгодно.');
+            }
+
+            function loadFromPDF() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json,application/json';
+                
+                input.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        try {
+                            const loadedData = JSON.parse(event.target.result);
+                            
+                            if (loadedData && Array.isArray(loadedData.goals) && loadedData.debts) {
+                                state = {
+                                    goals: loadedData.goals || [],
+                                    debts: {
+                                        owed: loadedData.debts?.owed || [],
+                                        owe: loadedData.debts?.owe || []
+                                    }
+                                };
+                                
+                                save();
+                                renderGoals();
+                                renderDebts();
+                                updateStats();
+                                
+                                alert('✅ Дані успішно відновлено!');
+                            } else {
+                                alert('❌ Невірний формат файлу');
+                            }
+                        } catch (error) {
+                            alert('❌ Помилка читання файлу');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+
+                input.click();
+            }
+
+            // Модалка
+            const modal = document.getElementById('goalModal');
+            
+            document.getElementById('createGoalBtn').addEventListener('click', () => {
+                modal.classList.add('active');
+            });
+
+            document.getElementById('cancelGoalBtn').addEventListener('click', () => {
+                modal.classList.remove('active');
+                document.getElementById('goalName').value = '';
+                document.getElementById('goalTarget').value = '';
+            });
+
+            document.getElementById('saveGoalBtn').addEventListener('click', () => {
+                const name = document.getElementById('goalName').value.trim().toUpperCase();
+                const currency = document.getElementById('goalCurrency').value;
+                const target = parseFloat(document.getElementById('goalTarget').value);
+
+                if (!name) { alert('Введіть назву'); return; }
+                if (isNaN(target) || target <= 0) { alert('Введіть цільову суму'); return; }
+
+                state.goals.push({
+                    id: genId(),
+                    name: name,
+                    currency: currency,
+                    target: target,
+                    saved: 0
+                });
+
+                save();
+                
+                document.getElementById('goalName').value = '';
+                document.getElementById('goalTarget').value = '';
+                modal.classList.remove('active');
+                
+                renderGoals();
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+
+            // Ініціалізація
+            load();
+            renderGoals();
+            renderDebts();
+            updateStats();
+
+            // Обробники
+            document.getElementById('savePDFBtn').addEventListener('click', saveToPDF);
+            document.getElementById('loadPDFBtn').addEventListener('click', loadFromPDF);
+            document.getElementById('addOwedBtn').addEventListener('click', addOwed);
+            document.getElementById('addOweBtn').addEventListener('click', addOwe);
+            document.getElementById('clearAllBtn').addEventListener('click', clearAll);
+        })();
+    </script>
+</body>
+</html>
