@@ -359,7 +359,7 @@
             border: 1px solid rgba(0, 230, 200, 0.3);
         }
 
-        /* Вкладки валют для щоденника */
+        /* Вкладки валют */
         .currency-tabs {
             display: flex;
             gap: 10px;
@@ -737,6 +737,7 @@
             color: #6a7a9c;
         }
 
+        /* Фікс для прапорців */
         .debt-select {
             padding: 14px 18px;
             background: rgba(30, 36, 48, 0.8);
@@ -745,14 +746,43 @@
             color: white;
             width: 100%;
             appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300e6c8' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300e6c8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
             background-repeat: no-repeat;
             background-position: right 15px center;
+            background-size: 16px;
         }
 
         .debt-select option {
             background: #1a1f2c;
             color: white;
+            padding: 10px;
+        }
+
+        /* Стилі для опцій з прапорцями */
+        .debt-select option[value="UAH"] {
+            background-image: url('https://flagcdn.com/ua.svg');
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            background-size: 20px;
+            padding-left: 35px;
+        }
+
+        .debt-select option[value="EUR"] {
+            background-image: url('https://flagcdn.com/eu.svg');
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            background-size: 20px;
+            padding-left: 35px;
+        }
+
+        .debt-select option[value="USD"] {
+            background-image: url('https://flagcdn.com/us.svg');
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            background-size: 20px;
+            padding-left: 35px;
         }
 
         .debt-btn {
