@@ -242,6 +242,8 @@
             background: var(--bg-input);
             border: 1px solid var(--border-medium);
             color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
         }
 
         .btn-icon:hover {
@@ -335,6 +337,7 @@
             border-radius: var(--radius-full);
             cursor: pointer;
             transition: var(--transition);
+            font-weight: 500;
         }
 
         .btn-logout:hover {
@@ -887,6 +890,10 @@
         .chart-container {
             height: 250px;
             position: relative;
+        }
+
+        .transactions-section {
+            margin-top: 24px;
         }
 
         .transactions-table {
@@ -1580,11 +1587,12 @@
             appId: "1:361694792367:web:ccbfc861668a568e1e225a"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database();
 
-        // State
+        // ========== STATE MANAGEMENT ==========
         let state = {
             goals: [],
             debts: { owed: [], owe: [] },
@@ -1595,13 +1603,13 @@
         let currentCurrency = 'EUR';
         let selectedCategory = null;
         
-        // Charts
+        // Charts instances
         let eurExpensesChart = null;
         let eurDynamicsChart = null;
         let uahExpensesChart = null;
         let uahDynamicsChart = null;
 
-        // DOM Elements
+        // ========== DOM ELEMENTS ==========
         const landingPage = document.getElementById('landingPage');
         const mainApp = document.getElementById('mainApp');
         const landingLoginBtn = document.getElementById('landingLoginBtn');
@@ -1629,7 +1637,7 @@
         const transactionType = document.getElementById('transactionType');
         const categoryButtons = document.getElementById('categoryButtons');
 
-        // Categories
+        // ========== CONSTANTS ==========
         const categoryTranslations = {
             'salary': 'Зарплата',
             'gift': 'Подарунок',
@@ -1660,7 +1668,7 @@
             'other': 'fa-ellipsis'
         };
 
-        // Helper Functions
+        // ========== HELPER FUNCTIONS ==========
         const getSymbol = (currency) => {
             const symbols = { UAH: '₴', EUR: '€', USD: '$' };
             return symbols[currency] || '?';
@@ -1684,7 +1692,29 @@
             setTimeout(() => refreshIndicator.classList.remove('active'), 1000);
         };
 
-        // Navigation
+        // ========== CATEGORY BUTTONS ==========
+        const updateCategoryButtons = () => {
+            const type = transactionType.value;
+            const categories = type === 'income' 
+                ? ['salary', 'gift', 'freelance', 'investment', 'other']
+                : ['food', 'transport', 'health', 'clothes', 'entertainment', 'cigarettes', 'alcohol', 'other'];
+            
+            categoryButtons.innerHTML = categories.map(cat => `
+                <button class="category-btn" data-category="${cat}">
+                    <i class="fas ${categoryIcons[cat]}"></i> ${categoryTranslations[cat]}
+                </button>
+            `).join('');
+            
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedCategory = btn.dataset.category;
+                });
+            });
+        };
+
+        // ========== NAVIGATION ==========
         tabDebts.addEventListener('click', () => {
             [tabDebts, tabGoals, tabJournal].forEach(t => t.classList.remove('active'));
             tabDebts.classList.add('active');
@@ -1711,7 +1741,7 @@
             updateJournal();
         });
 
-        // Currency tabs
+        // ========== CURRENCY TABS ==========
         currencyTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 currencyTabs.forEach(t => t.classList.remove('active'));
@@ -1722,7 +1752,7 @@
             });
         });
 
-        // Month navigation
+        // ========== MONTH NAVIGATION ==========
         document.getElementById('prevMonth').addEventListener('click', () => {
             currentMonth.setMonth(currentMonth.getMonth() - 1);
             updateMonthDisplay();
@@ -1740,7 +1770,7 @@
                 currentMonth.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
         };
 
-        // Transaction modal
+        // ========== TRANSACTION MODAL ==========
         window.openTransactionModal = (currency) => {
             selectedCategory = null;
             transactionCurrency.value = currency;
@@ -1750,28 +1780,7 @@
 
         transactionType.addEventListener('change', updateCategoryButtons);
 
-        const updateCategoryButtons = () => {
-            const type = transactionType.value;
-            const categories = type === 'income' 
-                ? ['salary', 'gift', 'freelance', 'investment', 'other']
-                : ['food', 'transport', 'health', 'clothes', 'entertainment', 'cigarettes', 'alcohol', 'other'];
-            
-            categoryButtons.innerHTML = categories.map(cat => `
-                <button class="category-btn" data-category="${cat}">
-                    <i class="fas ${categoryIcons[cat]}"></i> ${categoryTranslations[cat]}
-                </button>
-            `).join('');
-            
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    selectedCategory = btn.dataset.category;
-                });
-            });
-        };
-
-        // Debt Stats
+        // ========== DEBT FUNCTIONS ==========
         const updateDebtStats = () => {
             let owed = { UAH: 0, EUR: 0, USD: 0 };
             let owe = { UAH: 0, EUR: 0, USD: 0 };
@@ -1795,7 +1804,6 @@
             document.getElementById('totalNet').innerHTML = (totalOwed - totalOwe >= 0 ? '+' : '') + (totalOwed - totalOwe).toFixed(2) + ' ₴';
         };
 
-        // Render Debts
         const renderDebts = () => {
             const owedList = document.getElementById('owedList');
             owedList.innerHTML = !state.debts.owed?.length 
@@ -1842,7 +1850,7 @@
             });
         };
 
-        // Goal Functions
+        // ========== GOAL FUNCTIONS ==========
         window.addToGoal = (id) => {
             const input = document.getElementById(`add-${id}`);
             const amount = parseFloat(input.value);
@@ -1907,7 +1915,6 @@
             }
         };
 
-        // Render Goals
         const renderGoals = () => {
             const activeGoals = state.goals.filter(g => !g.completed);
             const completedGoals = state.goals.filter(g => g.completed);
@@ -1995,7 +2002,7 @@
             `;
         };
 
-        // Journal Functions
+        // ========== JOURNAL FUNCTIONS ==========
         const updateJournal = () => {
             const monthKey = getMonthKey(currentMonth);
             
@@ -2129,7 +2136,7 @@
             else uahDynamicsChart = chart2;
         };
 
-        // Firebase
+        // ========== FIREBASE FUNCTIONS ==========
         const saveToFirebase = () => {
             if (!currentUser) return;
             showRefresh();
@@ -2153,7 +2160,7 @@
             });
         };
 
-        // Event Listeners
+        // ========== EVENT LISTENERS ==========
         document.getElementById('addOwedBtn').addEventListener('click', () => {
             const name = document.getElementById('owedName').value.trim();
             const amount = parseFloat(document.getElementById('owedAmount').value);
@@ -2255,9 +2262,10 @@
             });
         });
 
-        // Auth
+        // ========== AUTHENTICATION ==========
         landingLoginBtn.addEventListener('click', () => {
-            auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => alert(e.message));
+            auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+                .catch(e => alert(e.message));
         });
 
         logoutBtn.addEventListener('click', () => auth.signOut());
