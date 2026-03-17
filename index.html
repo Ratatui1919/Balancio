@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    
+    <!-- Додаємо meta теги для безпеки -->
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="credentialless">
+    
     <title>Balancio · фінансовий баланс</title>
     
     <!-- Google Fonts -->
@@ -1714,6 +1719,45 @@
             });
         };
 
+        // ========== DATA MIGRATION ==========
+        const migrateOldData = (data) => {
+            // Якщо це старі дані без поля completed в цілях
+            if (data.goals && Array.isArray(data.goals)) {
+                data.goals = data.goals.map(goal => {
+                    if (goal.completed === undefined) {
+                        // Якщо ціль була виконана (saved >= target), відмічаємо як виконану
+                        const completed = goal.saved >= goal.target;
+                        return {
+                            ...goal,
+                            completed: completed,
+                            completedDate: completed ? Date.now() : null,
+                            history: goal.history || []
+                        };
+                    }
+                    return goal;
+                });
+            }
+            
+            // Забезпечуємо правильну структуру транзакцій
+            if (!data.transactions) {
+                data.transactions = { EUR: [], UAH: [] };
+            } else if (!data.transactions.EUR) {
+                data.transactions.EUR = [];
+            } else if (!data.transactions.UAH) {
+                data.transactions.UAH = [];
+            }
+            
+            // Забезпечуємо правильну структуру боргів
+            if (!data.debts) {
+                data.debts = { owed: [], owe: [] };
+            } else {
+                if (!data.debts.owed) data.debts.owed = [];
+                if (!data.debts.owe) data.debts.owe = [];
+            }
+            
+            return data;
+        };
+
         // ========== NAVIGATION ==========
         tabDebts.addEventListener('click', () => {
             [tabDebts, tabGoals, tabJournal].forEach(t => t.classList.remove('active'));
@@ -1785,8 +1829,12 @@
             let owed = { UAH: 0, EUR: 0, USD: 0 };
             let owe = { UAH: 0, EUR: 0, USD: 0 };
             
-            (state.debts.owed || []).forEach(d => owed[d.currency] += d.amount);
-            (state.debts.owe || []).forEach(d => owe[d.currency] += d.amount);
+            (state.debts.owed || []).forEach(d => {
+                if (d && d.currency) owed[d.currency] += Number(d.amount) || 0;
+            });
+            (state.debts.owe || []).forEach(d => {
+                if (d && d.currency) owe[d.currency] += Number(d.amount) || 0;
+            });
 
             ['UAH', 'EUR', 'USD'].forEach(curr => {
                 document.getElementById(`owed${curr}`).innerHTML = owed[curr].toFixed(2) + ' ' + getSymbol(curr);
@@ -1814,7 +1862,7 @@
                             <h4>${esc(d.name)}</h4>
                             ${d.description ? `<p>${esc(d.description)}</p>` : ''}
                         </div>
-                        <div class="debt-amount">${d.amount.toFixed(2)} ${getSymbol(d.currency)}</div>
+                        <div class="debt-amount">${Number(d.amount).toFixed(2)} ${getSymbol(d.currency)}</div>
                     </li>
                 `).join('');
 
@@ -1836,7 +1884,7 @@
                             <h4>${esc(d.name)}</h4>
                             ${d.description ? `<p>${esc(d.description)}</p>` : ''}
                         </div>
-                        <div class="debt-amount owe">${d.amount.toFixed(2)} ${getSymbol(d.currency)}</div>
+                        <div class="debt-amount owe">${Number(d.amount).toFixed(2)} ${getSymbol(d.currency)}</div>
                     </li>
                 `).join('');
 
@@ -1924,8 +1972,8 @@
             document.getElementById('activeBadge').innerHTML = activeGoals.length;
             document.getElementById('completedBadge').innerHTML = completedGoals.length;
 
-            const totalTarget = state.goals.reduce((sum, g) => sum + g.target, 0);
-            const totalSaved = state.goals.reduce((sum, g) => sum + g.saved, 0);
+            const totalTarget = state.goals.reduce((sum, g) => sum + (g.target || 0), 0);
+            const totalSaved = state.goals.reduce((sum, g) => sum + (g.saved || 0), 0);
             const totalProgress = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0;
             document.getElementById('totalProgress').innerHTML = totalProgress + '%';
 
@@ -1940,12 +1988,12 @@
 
         const renderGoalCard = (goal, isCompleted = false) => {
             const symbol = getSymbol(goal.currency);
-            const progress = goal.target > 0 ? (goal.saved / goal.target) * 100 : 0;
+            const progress = goal.target > 0 ? ((goal.saved || 0) / goal.target) * 100 : 0;
             
             return `
                 <div class="goal-card ${isCompleted ? 'completed' : ''}">
                     <div class="goal-header">
-                        <div class="goal-name">${esc(goal.name)}</div>
+                        <div class="goal-name">${esc(goal.name || 'Без назви')}</div>
                         <div class="goal-actions">
                             ${!isCompleted ? `
                                 <button class="btn-icon" onclick="completeGoal('${goal.id}')" title="Виконано">
@@ -1963,8 +2011,8 @@
                     </div>
 
                     <div class="goal-progress-info">
-                        <span>Накопичено: ${goal.saved.toFixed(2)} ${symbol}</span>
-                        <span>Ціль: ${goal.target.toFixed(2)} ${symbol}</span>
+                        <span>Накопичено: ${(goal.saved || 0).toFixed(2)} ${symbol}</span>
+                        <span>Ціль: ${(goal.target || 0).toFixed(2)} ${symbol}</span>
                     </div>
 
                     <div class="progress-bar">
@@ -2007,9 +2055,9 @@
             const monthKey = getMonthKey(currentMonth);
             
             ['EUR', 'UAH'].forEach(currency => {
-                const transactions = state.transactions[currency]?.filter(t => t.month === monthKey) || [];
-                const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-                const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+                const transactions = (state.transactions[currency] || []).filter(t => t && t.month === monthKey);
+                const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
+                const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
                 
                 document.getElementById(`${currency.toLowerCase()}Income`).innerHTML = income.toFixed(2) + (currency === 'EUR' ? ' €' : ' ₴');
                 document.getElementById(`${currency.toLowerCase()}Expense`).innerHTML = expense.toFixed(2) + (currency === 'EUR' ? ' €' : ' ₴');
@@ -2022,17 +2070,17 @@
 
         const renderTransactionsList = (elementId, transactions, symbol) => {
             const tbody = document.getElementById(elementId);
-            if (!transactions.length) {
+            if (!transactions || !transactions.length) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-tertiary)">Немає операцій за цей місяць</td></tr>';
             } else {
-                tbody.innerHTML = transactions.sort((a, b) => b.date - a.date).map(t => `
+                tbody.innerHTML = transactions.sort((a, b) => (b.date || 0) - (a.date || 0)).map(t => `
                     <tr>
-                        <td>${new Date(t.date).toLocaleDateString()}</td>
-                        <td><span class="category-badge">${categoryTranslations[t.category]}</span></td>
+                        <td>${t.date ? new Date(t.date).toLocaleDateString() : '-'}</td>
+                        <td><span class="category-badge">${categoryTranslations[t.category] || t.category}</span></td>
                         <td>${esc(t.description) || '-'}</td>
                         <td>
                             <span class="amount-badge ${t.type}">
-                                ${t.type === 'income' ? '+' : '-'}${t.amount.toFixed(2)} ${symbol}
+                                ${t.type === 'income' ? '+' : '-'}${(t.amount || 0).toFixed(2)} ${symbol}
                             </span>
                         </td>
                         <td><i class="fas fa-trash-alt delete-btn" onclick="deleteTransaction('${t.id}', '${elementId === 'eurTransactionsList' ? 'EUR' : 'UAH'}')"></i></td>
@@ -2043,7 +2091,7 @@
 
         window.deleteTransaction = (id, currency) => {
             if (confirm('Видалити цю операцію?')) {
-                state.transactions[currency] = state.transactions[currency].filter(t => t.id !== id);
+                state.transactions[currency] = (state.transactions[currency] || []).filter(t => t.id !== id);
                 saveToFirebase();
             }
         };
@@ -2051,12 +2099,14 @@
         const updateCharts = (currency, transactions) => {
             // Expenses by category
             const expensesByCategory = {};
-            transactions.filter(t => t.type === 'expense').forEach(t => {
-                const cat = categoryTranslations[t.category];
-                expensesByCategory[cat] = (expensesByCategory[cat] || 0) + t.amount;
+            (transactions || []).filter(t => t.type === 'expense').forEach(t => {
+                const cat = categoryTranslations[t.category] || t.category;
+                expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (t.amount || 0);
             });
 
-            const ctx1 = document.getElementById(currency + 'ExpensesChart').getContext('2d');
+            const ctx1 = document.getElementById(currency + 'ExpensesChart')?.getContext('2d');
+            if (!ctx1) return;
+            
             if (currency === 'eur' && eurExpensesChart) eurExpensesChart.destroy();
             if (currency === 'uah' && uahExpensesChart) uahExpensesChart.destroy();
             
@@ -2084,15 +2134,18 @@
 
             // Daily dynamics
             const dailyData = {};
-            transactions.forEach(t => {
+            (transactions || []).forEach(t => {
+                if (!t.date) return;
                 const date = new Date(t.date).toLocaleDateString();
                 if (!dailyData[date]) dailyData[date] = { income: 0, expense: 0 };
-                dailyData[date][t.type] += t.amount;
+                dailyData[date][t.type] += t.amount || 0;
             });
 
             const sortedDays = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
 
-            const ctx2 = document.getElementById(currency + 'DynamicsChart').getContext('2d');
+            const ctx2 = document.getElementById(currency + 'DynamicsChart')?.getContext('2d');
+            if (!ctx2) return;
+            
             if (currency === 'eur' && eurDynamicsChart) eurDynamicsChart.destroy();
             if (currency === 'uah' && uahDynamicsChart) uahDynamicsChart.destroy();
             
@@ -2140,23 +2193,35 @@
         const saveToFirebase = () => {
             if (!currentUser) return;
             showRefresh();
-            database.ref('users/' + currentUser.uid).set(state);
+            database.ref('users/' + currentUser.uid).set(state)
+                .catch(error => console.error('Save error:', error));
         };
 
         const loadFromFirebase = (uid) => {
             database.ref('users/' + uid).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
+                    // Міграція старих даних
+                    const migratedData = migrateOldData(data);
                     state = {
-                        goals: data.goals || [],
-                        debts: data.debts || { owed: [], owe: [] },
-                        transactions: data.transactions || { EUR: [], UAH: [] }
+                        goals: migratedData.goals || [],
+                        debts: migratedData.debts || { owed: [], owe: [] },
+                        transactions: migratedData.transactions || { EUR: [], UAH: [] }
+                    };
+                } else {
+                    // Новий користувач - створюємо порожній стан
+                    state = {
+                        goals: [],
+                        debts: { owed: [], owe: [] },
+                        transactions: { EUR: [], UAH: [] }
                     };
                 }
                 renderDebts();
                 renderGoals();
                 updateDebtStats();
                 updateJournal();
+            }, (error) => {
+                console.error('Firebase load error:', error);
             });
         };
 
@@ -2265,7 +2330,7 @@
         // ========== AUTHENTICATION ==========
         landingLoginBtn.addEventListener('click', () => {
             auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-                .catch(e => alert(e.message));
+                .catch(e => alert('Помилка входу: ' + e.message));
         });
 
         logoutBtn.addEventListener('click', () => auth.signOut());
