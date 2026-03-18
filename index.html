@@ -25,7 +25,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body data-theme="dark" data-accent="blue">
-    <!-- Refresh Indicator -->
     <div class="refresh-indicator" id="refreshIndicator">
         <i class="fas fa-sync-alt"></i>
         <span>Оновлення даних...</span>
@@ -34,18 +33,37 @@
     <div class="container">
         <!-- Landing Page -->
         <div id="landingPage" class="landing-page">
-            <div class="landing-icon">
-                <i class="fas fa-scale-balanced"></i>
-            </div>
-            <h1 class="landing-title">Balancio PRO</h1>
-            <p class="landing-subtitle">Повний контроль над фінансами. Борги, цілі, бюджет, аналітика та розумні поради.</p>
-            
-            <div class="features-grid" id="featuresGrid"></div>
+            <div class="landing-content">
+                <div class="landing-logo">
+                    <i class="fas fa-scale-balanced"></i>
+                </div>
+                <h1 class="landing-title">Balancio</h1>
+                <p class="landing-subtitle">Ваш персональний фінансовий баланс</p>
+                
+                <div class="landing-features" id="featuresGrid"></div>
 
-            <button class="btn btn-primary" id="landingLoginBtn">
-                <i class="fab fa-google"></i>
-                Увійти через Google
-            </button>
+                <div class="landing-card">
+                    <div class="landing-stats">
+                        <div class="landing-stat">
+                            <div class="landing-stat-value">10k+</div>
+                            <div class="landing-stat-label">користувачів</div>
+                        </div>
+                        <div class="landing-stat">
+                            <div class="landing-stat-value">100k+</div>
+                            <div class="landing-stat-label">транзакцій</div>
+                        </div>
+                        <div class="landing-stat">
+                            <div class="landing-stat-value">50k+</div>
+                            <div class="landing-stat-label">цілей</div>
+                        </div>
+                    </div>
+
+                    <button class="landing-btn" id="landingLoginBtn">
+                        <i class="fab fa-google"></i>
+                        Увійти через Google
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Main App -->
@@ -101,6 +119,7 @@
 
     <!-- Scripts -->
     <script src="firebase.js"></script>
+    <script src="helpers.js"></script>
     <script src="pages.js"></script>
     <script src="app.js"></script>
 </body>
