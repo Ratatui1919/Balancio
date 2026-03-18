@@ -9,7 +9,6 @@ const firebaseConfig = {
     appId: "1:361694792367:web:ccbfc861668a568e1e225a"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.database();
@@ -31,7 +30,6 @@ const AppState = {
         selectedCategory: null
     },
     
-    // Методи для роботи з даними
     async save() {
         if (!this.user) return;
         showRefresh();
@@ -42,25 +40,23 @@ const AppState = {
         }
     },
     
-    async load(uid) {
+    load(uid) {
         database.ref('users/' + uid).on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 this.data = this.migrateData(data);
             }
-            // Оновлюємо всі сторінки
-            if (typeof updateAllPages === 'function') {
-                updateAllPages();
+            if (typeof window.updateAllPages === 'function') {
+                window.updateAllPages();
             }
         });
     },
     
     migrateData(data) {
-        // Міграція старих даних в новий формат
         if (data.goals) {
             data.goals = data.goals.map(goal => ({
                 ...goal,
-                completed: goal.completed || goal.saved >= goal.target,
+                completed: goal.completed || (goal.saved >= goal.target),
                 completedDate: goal.completedDate || (goal.saved >= goal.target ? Date.now() : null),
                 history: goal.history || []
             }));
@@ -113,5 +109,60 @@ const Categories = {
         return type === 'income' 
             ? ['salary', 'gift', 'freelance', 'investment', 'other']
             : ['food', 'transport', 'health', 'clothes', 'entertainment', 'cigarettes', 'alcohol', 'other'];
+    }
+};
+
+// ========== HELPER FUNCTIONS ==========
+const Helpers = {
+    getSymbol(currency) {
+        const symbols = { UAH: '₴', EUR: '€', USD: '$' };
+        return symbols[currency] || '?';
+    },
+    
+    escape(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+    },
+    
+    generateId() {
+        return Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+    },
+    
+    getMonthKey(date) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    },
+    
+    formatDate(timestamp) {
+        return new Date(timestamp).toLocaleDateString('uk-UA');
+    },
+    
+    formatMoney(amount, currency = 'EUR') {
+        return amount.toFixed(2) + ' ' + this.getSymbol(currency);
+    }
+};
+
+// ========== FEATURES GRID ==========
+const FeaturesGrid = {
+    items: [
+        { icon: 'fa-hand-holding-heart', title: 'Борги', desc: 'Відстежуйте, хто вам винен і кому винні ви' },
+        { icon: 'fa-bullseye', title: 'Цілі', desc: 'Ставте фінансові цілі та досягайте їх' },
+        { icon: 'fa-book-open', title: 'Щоденник', desc: 'Записуйте доходи та витрати' },
+        { icon: 'fa-wallet', title: 'Мій банк', desc: 'Всі рахунки в одному місці' },
+        { icon: 'fa-chart-pie', title: 'Бюджет', desc: 'Плануйте витрати та контролюйте їх' },
+        { icon: 'fa-clock', title: 'Регулярні', desc: 'Автоматичні платежі та підписки' }
+    ],
+    
+    render() {
+        const container = document.getElementById('featuresGrid');
+        if (!container) return;
+        
+        const html = this.items.map(item => `
+            <div class="landing-feature">
+                <i class="fas ${item.icon}"></i>
+                <span>${item.title}</span>
+            </div>
+        `).join('');
+        
+        container.innerHTML = html;
     }
 };
