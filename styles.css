@@ -2467,30 +2467,39 @@ body {
     --accent-primary-rgb: 14, 165, 233;
 }
 
-/* Додати в кінець styles.css */
+/* Додати або замінити ці секції в кінці файлу */
 
-/* ===== ПОКРАЩЕНА ГОЛОВНА СТОРІНКА ===== */
+/* ===== ВИПРАВЛЕНА ГОЛОВНА СТОРІНКА ===== */
 .landing-page {
     min-height: 100vh;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: radial-gradient(circle at 10% 20%, rgba(var(--accent-primary-rgb), 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(var(--accent-secondary-rgb), 0.15) 0%, transparent 40%);
+    background: radial-gradient(circle at 10% 20%, rgba(var(--accent-primary-rgb, 59,130,246), 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(var(--accent-secondary-rgb, 16,185,129), 0.15) 0%, transparent 40%);
     padding: 20px;
+    margin: 0;
+    position: relative;
+    overflow-y: auto;
 }
 
 .landing-content {
     max-width: 600px;
-    width: 100%;
+    width: 90%;
     margin: 0 auto;
+    padding: 20px 0;
 }
 
 .landing-logo {
     font-size: 5rem;
     margin-bottom: 20px;
     animation: float 3s ease-in-out infinite;
+    text-align: center;
+}
+
+.landing-logo i {
+    color: var(--accent-primary, #3b82f6);
 }
 
 .landing-title {
@@ -2498,12 +2507,20 @@ body {
     font-weight: 800;
     margin-bottom: 16px;
     line-height: 1.1;
+    text-align: center;
+    background: linear-gradient(135deg, var(--accent-primary, #3b82f6), var(--accent-secondary, #10b981));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .landing-subtitle {
     font-size: 1.2rem;
     margin-bottom: 40px;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #9aa4b8);
+    text-align: center;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .landing-features {
@@ -2511,72 +2528,78 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin-bottom: 40px;
+    width: 100%;
 }
 
 .landing-feature {
-    background: var(--bg-card);
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-lg);
+    background: var(--bg-card, #1a1d24);
+    border: 1px solid var(--border-medium, rgba(255,255,255,0.1));
+    border-radius: var(--radius-lg, 16px);
     padding: 25px 15px;
     text-align: center;
     transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
 }
 
 .landing-feature:hover {
     transform: translateY(-5px);
-    border-color: var(--accent-primary);
-    box-shadow: var(--shadow-lg);
+    border-color: var(--accent-primary, #3b82f6);
+    box-shadow: 0 10px 30px rgba(var(--accent-primary-rgb, 59,130,246), 0.2);
 }
 
 .landing-feature i {
     font-size: 2.2rem;
-    color: var(--accent-primary);
+    color: var(--accent-primary, #3b82f6);
     margin-bottom: 12px;
 }
 
 .landing-feature span {
     font-size: 1rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-primary, #ffffff);
+    display: block;
 }
 
 .landing-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-medium);
-    border-radius: var(--radius-xl);
+    background: var(--bg-card, #1a1d24);
+    border: 1px solid var(--border-medium, rgba(255,255,255,0.1));
+    border-radius: var(--radius-xl, 24px);
     padding: 30px;
     backdrop-filter: blur(10px);
+    width: 100%;
 }
 
 .landing-stats {
     display: flex;
     justify-content: space-around;
     margin-bottom: 30px;
+    gap: 20px;
 }
 
 .landing-stat {
     text-align: center;
+    flex: 1;
 }
 
 .landing-stat-value {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--accent-primary);
+    color: var(--accent-primary, #3b82f6);
     margin-bottom: 5px;
 }
 
 .landing-stat-label {
     font-size: 0.9rem;
-    color: var(--text-tertiary);
+    color: var(--text-tertiary, #6b7a8f);
 }
 
 .landing-btn {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, var(--accent-primary), color-mix(in srgb, var(--accent-primary) 70%, black));
+    background: linear-gradient(135deg, var(--accent-primary, #3b82f6), color-mix(in srgb, var(--accent-primary, #3b82f6) 70%, black));
     color: white;
     border: none;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-full, 9999px);
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
@@ -2589,138 +2612,49 @@ body {
 
 .landing-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(var(--accent-primary-rgb), 0.4);
-}
-
-/* ===== СТИЛІ ДЛЯ ТЕМ ===== */
-.themes-container {
-    max-width: 1000px;
-    margin: 0 auto;
-}
-
-.theme-section {
-    margin-bottom: 40px;
-}
-
-.theme-section-title {
-    font-size: 1.4rem;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-primary);
-}
-
-.theme-section-title i {
-    color: var(--accent-primary);
-}
-
-.theme-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 20px;
-}
-
-.theme-card {
-    background: var(--bg-card);
-    border: 2px solid transparent;
-    border-radius: var(--radius-lg);
-    padding: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.theme-card:hover {
-    transform: translateY(-3px);
-    border-color: var(--accent-primary);
-    box-shadow: var(--shadow-md);
-}
-
-.theme-card.active {
-    border-color: var(--accent-primary);
-    background: rgba(var(--accent-primary-rgb), 0.05);
-}
-
-.theme-preview {
-    height: 100px;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    margin-bottom: 12px;
-    border: 1px solid var(--border-medium);
-}
-
-.theme-preview-dark {
-    background: #0a0c10;
-}
-
-.theme-preview-light {
-    background: #f3f4f6;
-}
-
-.theme-preview-blue .theme-preview-header { background: #3b82f6; }
-.theme-preview-green .theme-preview-header { background: #10b981; }
-.theme-preview-purple .theme-preview-header { background: #8b5cf6; }
-.theme-preview-pink .theme-preview-header { background: #ec4899; }
-.theme-preview-orange .theme-preview-header { background: #f97316; }
-.theme-preview-teal .theme-preview-header { background: #14b8a6; }
-.theme-preview-red .theme-preview-header { background: #ef4444; }
-.theme-preview-gray .theme-preview-header { background: #6b7280; }
-.theme-preview-sky .theme-preview-header { background: #0ea5e9; }
-
-.theme-preview-header {
-    height: 30px;
-}
-
-.theme-preview-content {
-    padding: 10px;
-}
-
-.theme-preview-line {
-    height: 8px;
-    margin-bottom: 6px;
-    border-radius: 4px;
-}
-
-.theme-preview-dark .theme-preview-line:nth-child(1) { background: rgba(255,255,255,0.1); }
-.theme-preview-dark .theme-preview-line:nth-child(2) { background: rgba(255,255,255,0.15); }
-.theme-preview-dark .theme-preview-line:nth-child(3) { background: rgba(255,255,255,0.2); }
-
-.theme-preview-light .theme-preview-line:nth-child(1) { background: rgba(0,0,0,0.05); }
-.theme-preview-light .theme-preview-line:nth-child(2) { background: rgba(0,0,0,0.1); }
-.theme-preview-light .theme-preview-line:nth-child(3) { background: rgba(0,0,0,0.15); }
-
-.theme-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.theme-name {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.theme-check {
-    color: var(--accent-primary);
-    font-size: 1.1rem;
+    box-shadow: 0 10px 30px rgba(var(--accent-primary-rgb, 59,130,246), 0.4);
 }
 
 /* ===== АДАПТИВНІСТЬ ДЛЯ ГОЛОВНОЇ ===== */
 @media (max-width: 768px) {
+    .landing-page {
+        padding: 16px;
+    }
+    
+    .landing-content {
+        width: 95%;
+    }
+    
     .landing-features {
         grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
     }
     
     .landing-title {
         font-size: 3rem;
     }
+    
+    .landing-subtitle {
+        font-size: 1.1rem;
+    }
 }
 
 @media (max-width: 480px) {
+    .landing-page {
+        padding: 12px;
+        align-items: flex-start;
+        min-height: 100vh;
+        height: auto;
+    }
+    
+    .landing-content {
+        width: 100%;
+        padding: 10px 0;
+    }
+    
     .landing-features {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
     
     .landing-title {
@@ -2729,13 +2663,42 @@ body {
     
     .landing-subtitle {
         font-size: 1rem;
+        margin-bottom: 30px;
+    }
+    
+    .landing-logo {
+        font-size: 4rem;
+    }
+    
+    .landing-card {
+        padding: 20px;
+    }
+    
+    .landing-stats {
+        flex-direction: column;
+        gap: 15px;
     }
     
     .landing-stat-value {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+    }
+}
+
+/* ===== ДЛЯ ДУЖЕ МАЛЕНЬКИХ ЕКРАНІВ ===== */
+@media (max-width: 360px) {
+    .landing-title {
+        font-size: 2rem;
     }
     
-    .theme-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .landing-logo {
+        font-size: 3.5rem;
+    }
+    
+    .landing-feature {
+        padding: 20px 10px;
+    }
+    
+    .landing-feature i {
+        font-size: 2rem;
     }
 }
