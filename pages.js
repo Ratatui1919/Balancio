@@ -1,25 +1,62 @@
-// ========== HELPER FUNCTIONS ==========
-const Helpers = {
-    getSymbol(currency) {
-        const symbols = { UAH: '₴', EUR: '€', USD: '$' };
-        return symbols[currency] || '?';
+// ========== NAVIGATION ==========
+const Navigation = {
+    items: [
+        { id: 'debts', icon: 'fa-hand-holding-heart', label: 'Борги' },
+        { id: 'goals', icon: 'fa-bullseye', label: 'Цілі' },
+        { id: 'journal', icon: 'fa-book-open', label: 'Щоденник' },
+        { id: 'bank', icon: 'fa-wallet', label: 'Мій банк' },
+        { id: 'budget', icon: 'fa-chart-pie', label: 'Бюджет' },
+        { id: 'recurring', icon: 'fa-clock', label: 'Регулярні' },
+        { id: 'analytics', icon: 'fa-chart-line', label: 'Аналітика' },
+        { id: 'tips', icon: 'fa-lightbulb', label: 'Поради' },
+        { id: 'archive', icon: 'fa-archive', label: 'Архів' },
+        { id: 'themes', icon: 'fa-palette', label: 'Теми' }
+    ],
+    
+    render() {
+        const navHtml = this.items.map(item => `
+            <button class="nav-tab" data-page="${item.id}">
+                <i class="fas ${item.icon}"></i>
+                <span>${item.label}</span>
+            </button>
+        `).join('');
+        
+        document.getElementById('navTabs').innerHTML = navHtml;
+        this.attachEvents();
     },
     
-    escape(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+    attachEvents() {
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const pageId = tab.dataset.page;
+                this.switchPage(pageId);
+            });
+        });
     },
     
-    generateId() {
-        return Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+    switchPage(pageId) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.nav-tab[data-page="${pageId}"]`).classList.add('active');
+        
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`${pageId}Page`).classList.add('active');
+        
+        this.renderPage(pageId);
     },
     
-    getMonthKey(date) {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    },
-    
-    formatDate(timestamp) {
-        return new Date(timestamp).toLocaleDateString('uk-UA');
+    renderPage(pageId) {
+        switch(pageId) {
+            case 'debts': DebtsPage.render(); break;
+            case 'goals': GoalsPage.render(); break;
+            case 'journal': JournalPage.render(); break;
+            case 'bank': BankPage.render(); break;
+            case 'budget': BudgetPage.render(); break;
+            case 'recurring': RecurringPage.render(); break;
+            case 'analytics': AnalyticsPage.render(); break;
+            case 'tips': TipsPage.render(); break;
+            case 'archive': ArchivePage.render(); break;
+            case 'themes': ThemesPage.render(); break;
+        }
     }
 };
 
@@ -31,21 +68,21 @@ const DebtsPage = {
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-title"><i class="fas fa-arrow-down"></i> Мені винені</div>
-                    <div class="stat-value" id="totalOwed">${this.calcTotal(data.owed)} ₴</div>
+                    <div class="stat-value">${this.calcTotal(data.owed)} ₴</div>
                     <div class="stat-details">
                         ${this.renderCurrencyStats(data.owed, 'owed')}
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title"><i class="fas fa-arrow-up"></i> Я винен</div>
-                    <div class="stat-value" id="totalOwe">${this.calcTotal(data.owe)} ₴</div>
+                    <div class="stat-value">${this.calcTotal(data.owe)} ₴</div>
                     <div class="stat-details">
                         ${this.renderCurrencyStats(data.owe, 'owe')}
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-title"><i class="fas fa-scale-balanced"></i> Чистий результат</div>
-                    <div class="stat-value" id="totalNet">${this.calcNet(data)} ₴</div>
+                    <div class="stat-value">${this.calcNet(data)} ₴</div>
                     <div class="stat-details">
                         ${this.renderNetStats(data)}
                     </div>
@@ -152,11 +189,9 @@ const DebtsPage = {
     },
     
     attachEvents() {
-        // Додавання боргів
         document.getElementById('addOwedBtn')?.addEventListener('click', () => this.addDebt('owed'));
         document.getElementById('addOweBtn')?.addEventListener('click', () => this.addDebt('owe'));
         
-        // Видалення боргів
         document.querySelectorAll('#owedList .debt-item').forEach(el => {
             el.addEventListener('click', () => this.deleteDebt('owed', el.dataset.id));
         });
@@ -219,10 +254,9 @@ const GoalsPage = {
                 </div>
             </div>
 
-            <div class="section-header">
+            <div class="page-header">
                 <h2 class="page-title">
                     <i class="fas fa-rocket"></i> Активні цілі
-                    <span class="section-badge">${activeGoals.length}</span>
                 </h2>
                 <button class="btn btn-primary" onclick="Modals.openGoalModal()">
                     <i class="fas fa-plus"></i> Нова ціль
@@ -235,7 +269,6 @@ const GoalsPage = {
 
             <h2 class="page-title">
                 <i class="fas fa-trophy"></i> Досягнуті цілі
-                <span class="section-badge">${completedGoals.length}</span>
             </h2>
 
             <div class="goals-grid">
@@ -333,7 +366,7 @@ const GoalsPage = {
                 <button class="btn-small" onclick="GoalsPage.addToGoal('${goal.id}')">
                     <i class="fas fa-plus"></i> Додати
                 </button>
-                <button class="btn-small btn-danger" onclick="GoalsPage.withdrawFromGoal('${goal.id}')">
+                <button class="btn-small" onclick="GoalsPage.withdrawFromGoal('${goal.id}')">
                     <i class="fas fa-minus"></i> Зняти
                 </button>
             </div>
@@ -589,8 +622,93 @@ const JournalPage = {
     },
     
     updateCharts() {
-        // Оновлення графіків буде тут
-        // Поки що заглушка
+        setTimeout(() => {
+            const monthKey = Helpers.getMonthKey(AppState.ui.currentMonth);
+            ['EUR', 'UAH'].forEach(currency => {
+                const transactions = (AppState.data.transactions[currency] || [])
+                    .filter(t => t.month === monthKey);
+                this.createCharts(currency.toLowerCase(), transactions);
+            });
+        }, 100);
+    },
+    
+    createCharts(currency, transactions) {
+        const expensesByCategory = {};
+        transactions.filter(t => t.type === 'expense').forEach(t => {
+            const cat = Categories.translations[t.category] || t.category;
+            expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (t.amount || 0);
+        });
+        
+        const ctx1 = document.getElementById(currency + 'ExpensesChart')?.getContext('2d');
+        if (ctx1) {
+            if (this.charts[currency + 'Expenses']) this.charts[currency + 'Expenses'].destroy();
+            
+            this.charts[currency + 'Expenses'] = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(expensesByCategory).length ? Object.keys(expensesByCategory) : ['Немає даних'],
+                    datasets: [{
+                        data: Object.keys(expensesByCategory).length ? Object.values(expensesByCategory) : [1],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: Object.keys(expensesByCategory).length > 0, position: 'bottom' }
+                    }
+                }
+            });
+        }
+        
+        const dailyData = {};
+        transactions.forEach(t => {
+            if (!t.date) return;
+            const date = Helpers.formatDate(t.date);
+            if (!dailyData[date]) dailyData[date] = { income: 0, expense: 0 };
+            dailyData[date][t.type] += t.amount || 0;
+        });
+        
+        const sortedDays = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+        
+        const ctx2 = document.getElementById(currency + 'DynamicsChart')?.getContext('2d');
+        if (ctx2) {
+            if (this.charts[currency + 'Dynamics']) this.charts[currency + 'Dynamics'].destroy();
+            
+            this.charts[currency + 'Dynamics'] = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: sortedDays,
+                    datasets: [
+                        { 
+                            label: 'Дохід', 
+                            data: sortedDays.map(d => dailyData[d]?.income || 0), 
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        { 
+                            label: 'Витрати', 
+                            data: sortedDays.map(d => dailyData[d]?.expense || 0), 
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
     }
 };
 
@@ -654,16 +772,6 @@ const BankPage = {
         `).join('');
     },
     
-    addAccount(data) {
-        AppState.data.bankAccounts.push({
-            id: Helpers.generateId(),
-            ...data,
-            icon: this.getRandomIcon()
-        });
-        AppState.save();
-        this.render();
-    },
-    
     deleteAccount(id) {
         if (confirm('Видалити цей рахунок?')) {
             AppState.data.bankAccounts = AppState.data.bankAccounts.filter(acc => acc.id !== id);
@@ -675,6 +783,182 @@ const BankPage = {
     getRandomIcon() {
         const icons = ['fa-building', 'fa-credit-card', 'fa-wallet', 'fa-piggy-bank', 'fa-coins'];
         return icons[Math.floor(Math.random() * icons.length)];
+    }
+};
+
+// ========== BUDGET PAGE ==========
+const BudgetPage = {
+    render() {
+        const monthKey = Helpers.getMonthKey(AppState.ui.currentMonth);
+        const monthName = AppState.ui.currentMonth.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
+        const budgetData = AppState.data.budgets[monthKey] || this.getDefaultBudget();
+        
+        // Оновлюємо витрати з транзакцій
+        this.updateSpent(monthKey);
+        
+        const html = `
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="fas fa-chart-pie"></i> Бюджет на ${monthName}
+                </h2>
+                <button class="btn btn-primary" onclick="BudgetPage.editBudget()">
+                    <i class="fas fa-edit"></i> Редагувати
+                </button>
+            </div>
+
+            <div class="budget-summary">
+                <div class="stat-card">
+                    <div class="stat-title">Загальний бюджет</div>
+                    <div class="stat-value">${this.calcTotalBudget(budgetData)} €</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Витрачено</div>
+                    <div class="stat-value expense">${this.calcTotalSpent(budgetData)} €</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Залишилось</div>
+                    <div class="stat-value ${this.calcRemaining(budgetData) >= 0 ? 'income' : 'expense'}">
+                        ${this.calcRemaining(budgetData)} €
+                    </div>
+                </div>
+            </div>
+
+            <div class="budget-grid">
+                ${this.renderBudgetItems(budgetData)}
+            </div>
+        `;
+        
+        document.getElementById('budgetPage').innerHTML = html;
+    },
+    
+    getDefaultBudget() {
+        return {
+            food: { name: 'Їжа', planned: 400, spent: 0, icon: 'fa-utensils' },
+            transport: { name: 'Транспорт', planned: 100, spent: 0, icon: 'fa-bus' },
+            entertainment: { name: 'Розваги', planned: 150, spent: 0, icon: 'fa-film' },
+            health: { name: 'Здоров\'я', planned: 100, spent: 0, icon: 'fa-heartbeat' },
+            shopping: { name: 'Покупки', planned: 200, spent: 0, icon: 'fa-bag-shopping' },
+            other: { name: 'Інше', planned: 150, spent: 0, icon: 'fa-ellipsis' }
+        };
+    },
+    
+    calcTotalBudget(budget) {
+        return Object.values(budget).reduce((sum, cat) => sum + (cat.planned || 0), 0).toFixed(2);
+    },
+    
+    calcTotalSpent(budget) {
+        return Object.values(budget).reduce((sum, cat) => sum + (cat.spent || 0), 0).toFixed(2);
+    },
+    
+    calcRemaining(budget) {
+        const total = parseFloat(this.calcTotalBudget(budget));
+        const spent = parseFloat(this.calcTotalSpent(budget));
+        return (total - spent).toFixed(2);
+    },
+    
+    renderBudgetItems(budget) {
+        return Object.entries(budget).map(([key, cat]) => {
+            const percent = cat.planned > 0 ? ((cat.spent || 0) / cat.planned) * 100 : 0;
+            const status = percent > 100 ? 'budget-danger' : percent > 80 ? 'budget-warning' : '';
+            
+            return `
+                <div class="budget-card">
+                    <div class="budget-header">
+                        <div class="budget-category">
+                            <i class="fas ${cat.icon}"></i> ${cat.name}
+                        </div>
+                        <span class="${status}">${percent.toFixed(0)}%</span>
+                    </div>
+                    <div class="budget-numbers">
+                        <span>Витрачено: ${(cat.spent || 0).toFixed(2)} €</span>
+                        <span>План: ${(cat.planned || 0).toFixed(2)} €</span>
+                    </div>
+                    <div class="budget-progress-bar">
+                        <div class="budget-progress-fill ${status}" style="width: ${Math.min(percent, 100)}%"></div>
+                    </div>
+                    ${percent > 100 ? 
+                        `<div class="budget-warning">Перевищення на ${(percent - 100).toFixed(0)}%</div>` : 
+                        `<div class="budget-remaining">Залишилось ${((cat.planned || 0) - (cat.spent || 0)).toFixed(2)} €</div>`
+                    }
+                </div>
+            `;
+        }).join('');
+    },
+    
+    editBudget() {
+        const monthKey = Helpers.getMonthKey(AppState.ui.currentMonth);
+        const budgetData = AppState.data.budgets[monthKey] || this.getDefaultBudget();
+        
+        let formHtml = '<div class="budget-edit-form">';
+        Object.entries(budgetData).forEach(([key, cat]) => {
+            formHtml += `
+                <div class="budget-edit-item">
+                    <label><i class="fas ${cat.icon}"></i> ${cat.name}</label>
+                    <input type="number" class="budget-edit-input" id="budget-${key}" 
+                           value="${cat.planned || 0}" step="10" min="0">
+                </div>
+            `;
+        });
+        formHtml += '</div>';
+        
+        const modal = document.getElementById('budgetModal');
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2><i class="fas fa-chart-pie"></i> Редагувати бюджет</h2>
+                ${formHtml}
+                <div class="modal-buttons">
+                    <button class="modal-btn create" onclick="BudgetPage.saveBudget()">Зберегти</button>
+                    <button class="modal-btn cancel" onclick="Modals.closeModal('budgetModal')">Скасувати</button>
+                </div>
+            </div>
+        `;
+        modal.classList.add('active');
+    },
+    
+    saveBudget() {
+        const monthKey = Helpers.getMonthKey(AppState.ui.currentMonth);
+        const defaultBudget = this.getDefaultBudget();
+        const newBudget = {};
+        
+        Object.keys(defaultBudget).forEach(key => {
+            const input = document.getElementById(`budget-${key}`);
+            if (input) {
+                newBudget[key] = {
+                    ...defaultBudget[key],
+                    planned: parseFloat(input.value) || 0,
+                    spent: AppState.data.budgets[monthKey]?.[key]?.spent || 0
+                };
+            }
+        });
+        
+        if (!AppState.data.budgets) AppState.data.budgets = {};
+        AppState.data.budgets[monthKey] = newBudget;
+        AppState.save();
+        
+        Modals.closeModal('budgetModal');
+        this.render();
+    },
+    
+    updateSpent(monthKey) {
+        const transactions = [
+            ...(AppState.data.transactions.EUR || []),
+            ...(AppState.data.transactions.UAH || [])
+        ].filter(t => t.month === monthKey && t.type === 'expense');
+        
+        if (!AppState.data.budgets[monthKey]) {
+            AppState.data.budgets[monthKey] = this.getDefaultBudget();
+        }
+        
+        Object.keys(AppState.data.budgets[monthKey]).forEach(key => {
+            AppState.data.budgets[monthKey][key].spent = 0;
+        });
+        
+        transactions.forEach(t => {
+            const cat = t.category;
+            if (AppState.data.budgets[monthKey][cat]) {
+                AppState.data.budgets[monthKey][cat].spent += t.amount || 0;
+            }
+        });
     }
 };
 
@@ -697,9 +981,9 @@ const RecurringPage = {
                 ${this.renderPayments(payments)}
             </div>
 
-            <h3 class="page-title" style="margin-top: 32px;">
+            <h2 class="page-title" style="font-size: 1.2rem; margin-top: 32px;">
                 <i class="fas fa-calendar-alt"></i> Майбутні платежі
-            </h3>
+            </h2>
 
             <div class="recurring-grid">
                 ${this.renderUpcoming(payments)}
@@ -733,7 +1017,7 @@ const RecurringPage = {
                     <button class="btn-small" onclick="RecurringPage.editPayment('${p.id}')">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-small btn-danger" onclick="RecurringPage.deletePayment('${p.id}')">
+                    <button class="btn-small" onclick="RecurringPage.deletePayment('${p.id}')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -746,7 +1030,6 @@ const RecurringPage = {
             return '<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>Немає майбутніх платежів</p></div>';
         }
         
-        // Простий розрахунок майбутніх платежів
         return payments.slice(0, 3).map(p => {
             const daysLeft = Math.floor(Math.random() * 10) + 1;
             return `
@@ -759,15 +1042,6 @@ const RecurringPage = {
                 </div>
             `;
         }).join('');
-    },
-    
-    addPayment(data) {
-        AppState.data.recurringPayments.push({
-            id: Helpers.generateId(),
-            ...data
-        });
-        AppState.save();
-        this.render();
     },
     
     editPayment(id) {
@@ -783,88 +1057,244 @@ const RecurringPage = {
             AppState.save();
             this.render();
         }
-    },
-    
-    updatePayment(id, data) {
-        const index = AppState.data.recurringPayments.findIndex(p => p.id === id);
-        if (index !== -1) {
-            AppState.data.recurringPayments[index] = { ...AppState.data.recurringPayments[index], ...data };
-            AppState.save();
-            this.render();
-        }
     }
 };
 
-// ========== BUDGET PAGE ==========
-const BudgetPage = {
+// ========== ANALYTICS PAGE ==========
+const AnalyticsPage = {
+    charts: {
+        pie: null,
+        line: null
+    },
+    
     render() {
-        const monthName = AppState.ui.currentMonth.toLocaleDateString('uk-UA', { month: 'long' });
+        const monthName = AppState.ui.currentMonth.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
         
         const html = `
             <div class="page-header">
                 <h2 class="page-title">
-                    <i class="fas fa-chart-pie"></i> Бюджет на ${monthName}
+                    <i class="fas fa-chart-line"></i> Аналітика
                 </h2>
-                <button class="btn btn-primary" onclick="Modals.openBudgetModal()">
-                    <i class="fas fa-plus"></i> Налаштувати бюджет
-                </button>
+                <div class="month-selector">
+                    <button class="btn-icon" onclick="AnalyticsPage.changeMonth(-1)">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="current-month" id="analyticsMonth">${monthName}</span>
+                    <button class="btn-icon" onclick="AnalyticsPage.changeMonth(1)">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
 
-            <div class="budget-grid" id="budgetContainer">
-                ${this.renderBudgetItems()}
+            <div class="analytics-summary">
+                <div class="stat-card">
+                    <div class="stat-title">Дохід</div>
+                    <div class="stat-value income" id="analyticsIncome">0 €</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Витрати</div>
+                    <div class="stat-value expense" id="analyticsExpense">0 €</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Накопичено</div>
+                    <div class="stat-value" id="analyticsSaved">0 €</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-pie"></i> Розподіл витрат
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="analyticsPieChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-line"></i> Динаміка за місяць
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="analyticsLineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-insights">
+                <h3 class="page-title" style="font-size: 1.2rem; margin: 24px 0 16px;">
+                    <i class="fas fa-lightbulb"></i> Інсайти
+                </h3>
+                <div class="insights-grid" id="analyticsInsights"></div>
             </div>
         `;
         
-        document.getElementById('budgetPage').innerHTML = html;
+        document.getElementById('analyticsPage').innerHTML = html;
+        this.updateData();
     },
     
-    renderBudgetItems() {
-        // Приклад бюджету (потім замінити на реальні дані)
-        const sampleBudget = [
-            { category: 'food', name: 'Їжа', planned: 400, spent: 320, icon: 'fa-utensils' },
-            { category: 'transport', name: 'Транспорт', planned: 80, spent: 45, icon: 'fa-bus' },
-            { category: 'entertainment', name: 'Розваги', planned: 150, spent: 180, icon: 'fa-film' },
-            { category: 'health', name: 'Здоров\'я', planned: 100, spent: 35, icon: 'fa-heartbeat' }
+    changeMonth(delta) {
+        AppState.ui.currentMonth.setMonth(AppState.ui.currentMonth.getMonth() + delta);
+        this.updateData();
+    },
+    
+    updateData() {
+        const monthKey = Helpers.getMonthKey(AppState.ui.currentMonth);
+        const monthName = AppState.ui.currentMonth.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
+        document.getElementById('analyticsMonth').textContent = monthName;
+        
+        const transactions = [
+            ...(AppState.data.transactions.EUR || []).filter(t => t.month === monthKey),
+            ...(AppState.data.transactions.UAH || []).filter(t => t.month === monthKey)
         ];
         
-        return sampleBudget.map(item => {
-            const percent = (item.spent / item.planned) * 100;
-            const status = percent > 100 ? 'budget-danger' : percent > 80 ? 'budget-warning' : '';
-            
-            return `
-                <div class="budget-card">
-                    <div class="budget-header">
-                        <div class="budget-category">
-                            <i class="fas ${item.icon}"></i> ${item.name}
-                        </div>
-                        <span class="${status}">${percent.toFixed(0)}%</span>
-                    </div>
-                    <div class="budget-numbers">
-                        <span>Витрачено: ${item.spent} €</span>
-                        <span>План: ${item.planned} €</span>
-                    </div>
-                    <div class="budget-progress-bar">
-                        <div class="budget-progress-fill" style="width: ${Math.min(percent, 100)}%"></div>
-                    </div>
-                    ${percent > 100 ? 
-                        `<div class="budget-warning">Перевищення на ${(percent - 100).toFixed(0)}%</div>` : 
-                        percent > 80 ? 
-                        `<div class="budget-warning">Залишилось ${(item.planned - item.spent).toFixed(2)} €</div>` : ''
-                    }
-                </div>
-            `;
-        }).join('');
+        const income = transactions.filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+        const expense = transactions.filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+        
+        document.getElementById('analyticsIncome').innerHTML = income.toFixed(2) + ' €';
+        document.getElementById('analyticsExpense').innerHTML = expense.toFixed(2) + ' €';
+        document.getElementById('analyticsSaved').innerHTML = (income - expense).toFixed(2) + ' €';
+        
+        this.updateCharts(transactions);
+        this.updateInsights(transactions, income, expense);
     },
     
-    updateBudget(category, planned) {
-        // Логіка оновлення бюджету
-        const monthKey = Helpers.getMonthKey(AppState.ui.currentMonth);
-        if (!AppState.data.budgets[monthKey]) {
-            AppState.data.budgets[monthKey] = {};
+    updateCharts(transactions) {
+        const expensesByCategory = {};
+        transactions.filter(t => t.type === 'expense').forEach(t => {
+            const cat = Categories.translations[t.category] || t.category;
+            expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (t.amount || 0);
+        });
+        
+        const pieCtx = document.getElementById('analyticsPieChart')?.getContext('2d');
+        if (pieCtx) {
+            if (this.charts.pie) this.charts.pie.destroy();
+            
+            this.charts.pie = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(expensesByCategory).length ? Object.keys(expensesByCategory) : ['Немає даних'],
+                    datasets: [{
+                        data: Object.keys(expensesByCategory).length ? Object.values(expensesByCategory) : [1],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: Object.keys(expensesByCategory).length > 0, position: 'bottom' }
+                    }
+                }
+            });
         }
-        AppState.data.budgets[monthKey][category] = planned;
-        AppState.save();
-        this.render();
+        
+        const dailyData = {};
+        transactions.forEach(t => {
+            if (!t.date) return;
+            const date = Helpers.formatDate(t.date);
+            if (!dailyData[date]) dailyData[date] = { income: 0, expense: 0 };
+            dailyData[date][t.type] += t.amount || 0;
+        });
+        
+        const sortedDays = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+        
+        const lineCtx = document.getElementById('analyticsLineChart')?.getContext('2d');
+        if (lineCtx) {
+            if (this.charts.line) this.charts.line.destroy();
+            
+            this.charts.line = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: sortedDays,
+                    datasets: [
+                        { 
+                            label: 'Дохід', 
+                            data: sortedDays.map(d => dailyData[d]?.income || 0), 
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        { 
+                            label: 'Витрати', 
+                            data: sortedDays.map(d => dailyData[d]?.expense || 0), 
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+    },
+    
+    updateInsights(transactions, income, expense) {
+        const container = document.getElementById('analyticsInsights');
+        if (!container) return;
+        
+        const insights = [];
+        
+        const avgExpense = transactions.filter(t => t.type === 'expense').length > 0
+            ? expense / transactions.filter(t => t.type === 'expense').length
+            : 0;
+        
+        if (avgExpense > 0) {
+            insights.push(`
+                <div class="insight-card">
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        <div class="insight-title">Середній чек</div>
+                        <div class="insight-value">${avgExpense.toFixed(2)} €</div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        const maxExpense = transactions
+            .filter(t => t.type === 'expense')
+            .sort((a, b) => (b.amount || 0) - (a.amount || 0))[0];
+        
+        if (maxExpense) {
+            insights.push(`
+                <div class="insight-card">
+                    <i class="fas fa-crown"></i>
+                    <div>
+                        <div class="insight-title">Найбільша витрата</div>
+                        <div class="insight-value">${maxExpense.amount.toFixed(2)} €</div>
+                        <div style="font-size:0.8rem; color:var(--text-tertiary)">${Categories.translations[maxExpense.category]}</div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        const savingsRate = income > 0 ? ((income - expense) / income * 100).toFixed(0) : 0;
+        insights.push(`
+            <div class="insight-card">
+                <i class="fas fa-piggy-bank"></i>
+                <div>
+                    <div class="insight-title">Норма заощаджень</div>
+                    <div class="insight-value">${savingsRate}%</div>
+                </div>
+            </div>
+        `);
+        
+        container.innerHTML = insights.join('');
     }
 };
 
@@ -873,7 +1303,7 @@ const TipsPage = {
     tips: [
         {
             title: 'Правило 50/30/20',
-            text: '50% доходу на потреби, 30% на бажання, 20% на заощадження. Це допоможе збалансувати бюджет.'
+            text: '50% доходу на потреби, 30% на бажання, 20% на заощадження.'
         },
         {
             title: 'Економія на підписках',
@@ -881,19 +1311,19 @@ const TipsPage = {
         },
         {
             title: 'Фінансова подушка',
-            text: 'Рекомендується мати запас у розмірі 3-6 місячних витрат на непередбачені ситуації.'
+            text: 'Рекомендується мати запас 3-6 місячних витрат.'
         },
         {
             title: 'Інвестиції для початківців',
-            text: 'Почніть з малого - регулярно інвестуйте навіть невеликі суми, використовуючи DCA стратегію.'
+            text: 'Почніть з малого - регулярно інвестуйте невеликі суми.'
         },
         {
             title: 'Кешбек та бонуси',
-            text: 'Використовуйте картки з кешбеком для повсякденних витрат - це дозволить повертати частину грошей.'
+            text: 'Використовуйте картки з кешбеком для повсякденних витрат.'
         },
         {
             title: 'Автоматизація заощаджень',
-            text: 'Налаштуйте автоматичне перерахування відсотка від доходу на заощадження - так ви не будете витрачати ці гроші.'
+            text: 'Налаштуйте автоматичне перерахування % від доходу на заощадження.'
         }
     ],
     
@@ -926,7 +1356,6 @@ const TipsPage = {
     },
     
     refresh() {
-        // Перемішуємо поради
         this.tips = [...this.tips].sort(() => Math.random() - 0.5);
         this.render();
     }
@@ -965,13 +1394,11 @@ const ArchivePage = {
     },
     
     renderArchiveItems() {
-        // Збираємо всі транзакції
         const allTransactions = [
             ...(AppState.data.transactions.EUR || []),
             ...(AppState.data.transactions.UAH || [])
         ];
         
-        // Фільтруємо за роком
         const filtered = this.currentFilter === 'all' 
             ? allTransactions 
             : allTransactions.filter(t => {
@@ -988,7 +1415,6 @@ const ArchivePage = {
             `;
         }
         
-        // Групуємо за місяцями
         const grouped = {};
         filtered.forEach(t => {
             if (!t.date) return;
@@ -1043,11 +1469,11 @@ const ThemesPage = {
 
             <div class="theme-settings">
                 <div class="theme-option ${currentTheme === 'dark' ? 'active' : ''}" onclick="ThemesPage.setTheme('dark')">
-                    <i class="fas fa-moon"></i>
+                    <i class="fas fa-moon" style="font-size: 2rem;"></i>
                     <h3>Темна</h3>
                 </div>
                 <div class="theme-option ${currentTheme === 'light' ? 'active' : ''}" onclick="ThemesPage.setTheme('light')">
-                    <i class="fas fa-sun"></i>
+                    <i class="fas fa-sun" style="font-size: 2rem;"></i>
                     <h3>Світла</h3>
                 </div>
             </div>
@@ -1092,77 +1518,311 @@ const ThemesPage = {
     }
 };
 
-// ========== NAVIGATION ==========
-const Navigation = {
-    items: [
-        { id: 'debts', icon: 'fa-hand-holding-heart', label: 'Борги' },
-        { id: 'goals', icon: 'fa-bullseye', label: 'Цілі' },
-        { id: 'journal', icon: 'fa-book-open', label: 'Щоденник' },
-        { id: 'bank', icon: 'fa-wallet', label: 'Мій банк' },
-        { id: 'budget', icon: 'fa-chart-pie', label: 'Бюджет' },
-        { id: 'recurring', icon: 'fa-clock', label: 'Регулярні' },
-        { id: 'analytics', icon: 'fa-chart-line', label: 'Аналітика' },
-        { id: 'tips', icon: 'fa-lightbulb', label: 'Поради' },
-        { id: 'archive', icon: 'fa-archive', label: 'Архів' },
-        { id: 'themes', icon: 'fa-palette', label: 'Теми' }
-    ],
+// ========== MODALS ==========
+const Modals = {
+    openGoalModal(goal = null) {
+        const modal = document.getElementById('goalModal');
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2><i class="fas fa-bullseye"></i> ${goal ? 'Редагувати' : 'Нова'} ціль</h2>
+                <input type="text" class="modal-input" id="goalName" placeholder="Назва цілі" value="${goal?.name || ''}">
+                <select class="modal-select" id="goalCurrency">
+                    <option value="UAH" ${goal?.currency === 'UAH' ? 'selected' : ''}>🇺🇦 Гривня</option>
+                    <option value="EUR" ${goal?.currency === 'EUR' ? 'selected' : ''}>🇪🇺 Євро</option>
+                    <option value="USD" ${goal?.currency === 'USD' ? 'selected' : ''}>🇺🇸 Долар</option>
+                </select>
+                <input type="number" class="modal-input" id="goalTarget" placeholder="Цільова сума" value="${goal?.target || ''}">
+                <div class="modal-buttons">
+                    <button class="modal-btn create" onclick="Modals.saveGoal('${goal?.id || ''}')">${goal ? 'Зберегти' : 'Створити'}</button>
+                    <button class="modal-btn cancel" onclick="Modals.closeModal('goalModal')">Скасувати</button>
+                </div>
+            </div>
+        `;
+        modal.classList.add('active');
+    },
     
-    render() {
-        const navHtml = this.items.map(item => `
-            <button class="nav-tab" data-page="${item.id}">
-                <i class="fas ${item.icon}"></i>
-                <span>${item.label}</span>
+    openTransactionModal(currency, transaction = null) {
+        const modal = document.getElementById('transactionModal');
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2><i class="fas fa-exchange-alt"></i> ${transaction ? 'Редагувати' : 'Нова'} операція</h2>
+                <input type="hidden" id="transactionCurrency" value="${currency}">
+                <select class="modal-select" id="transactionType" onchange="Modals.updateCategoryButtons()">
+                    <option value="income" ${transaction?.type === 'income' ? 'selected' : ''}>💰 Дохід</option>
+                    <option value="expense" ${transaction?.type === 'expense' ? 'selected' : ''}>💸 Витрата</option>
+                </select>
+                
+                <div class="category-buttons" id="categoryButtons"></div>
+
+                <input type="text" class="modal-input" id="transactionDesc" placeholder="Опис" value="${transaction?.description || ''}">
+                <input type="number" class="modal-input" id="transactionAmount" placeholder="Сума" value="${transaction?.amount || ''}">
+                
+                <div class="modal-buttons">
+                    <button class="modal-btn create" onclick="Modals.saveTransaction('${transaction?.id || ''}')">${transaction ? 'Зберегти' : 'Додати'}</button>
+                    <button class="modal-btn cancel" onclick="Modals.closeModal('transactionModal')">Скасувати</button>
+                </div>
+            </div>
+        `;
+        
+        this.updateCategoryButtons(transaction?.category);
+        modal.classList.add('active');
+    },
+    
+    openBankModal(account = null) {
+        const modal = document.getElementById('bankModal');
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2><i class="fas fa-wallet"></i> ${account ? 'Редагувати' : 'Новий'} рахунок</h2>
+                <input type="text" class="modal-input" id="bankName" placeholder="Назва рахунку" value="${account?.name || ''}">
+                <select class="modal-select" id="bankCurrency">
+                    <option value="UAH" ${account?.currency === 'UAH' ? 'selected' : ''}>🇺🇦 Гривня</option>
+                    <option value="EUR" ${account?.currency === 'EUR' ? 'selected' : ''}>🇪🇺 Євро</option>
+                    <option value="USD" ${account?.currency === 'USD' ? 'selected' : ''}>🇺🇸 Долар</option>
+                </select>
+                <input type="number" class="modal-input" id="bankBalance" placeholder="Поточний баланс" value="${account?.balance || ''}">
+                <div class="modal-buttons">
+                    <button class="modal-btn create" onclick="Modals.saveBank('${account?.id || ''}')">${account ? 'Зберегти' : 'Додати'}</button>
+                    <button class="modal-btn cancel" onclick="Modals.closeModal('bankModal')">Скасувати</button>
+                </div>
+            </div>
+        `;
+        modal.classList.add('active');
+    },
+    
+    openRecurringModal(payment = null) {
+        const modal = document.getElementById('recurringModal');
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2><i class="fas fa-clock"></i> ${payment ? 'Редагувати' : 'Новий'} платіж</h2>
+                <input type="text" class="modal-input" id="recurringName" placeholder="Назва" value="${payment?.name || ''}">
+                <input type="number" class="modal-input" id="recurringAmount" placeholder="Сума" value="${payment?.amount || ''}">
+                <select class="modal-select" id="recurringCurrency">
+                    <option value="UAH" ${payment?.currency === 'UAH' ? 'selected' : ''}>🇺🇦 Гривня</option>
+                    <option value="EUR" ${payment?.currency === 'EUR' ? 'selected' : ''}>🇪🇺 Євро</option>
+                    <option value="USD" ${payment?.currency === 'USD' ? 'selected' : ''}>🇺🇸 Долар</option>
+                </select>
+                <select class="modal-select" id="recurringFrequency">
+                    <option value="Щомісяця" ${payment?.frequency === 'Щомісяця' ? 'selected' : ''}>Щомісяця</option>
+                    <option value="Щокварталу" ${payment?.frequency === 'Щокварталу' ? 'selected' : ''}>Щокварталу</option>
+                    <option value="Щороку" ${payment?.frequency === 'Щороку' ? 'selected' : ''}>Щороку</option>
+                </select>
+                <input type="text" class="modal-input" id="recurringDay" placeholder="День платежу" value="${payment?.day || ''}">
+                <input type="text" class="modal-input" id="recurringCategory" placeholder="Категорія" value="${payment?.category || ''}">
+                <div class="modal-buttons">
+                    <button class="modal-btn create" onclick="Modals.saveRecurring('${payment?.id || ''}')">${payment ? 'Зберегти' : 'Додати'}</button>
+                    <button class="modal-btn cancel" onclick="Modals.closeModal('recurringModal')">Скасувати</button>
+                </div>
+            </div>
+        `;
+        modal.classList.add('active');
+    },
+    
+    closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    },
+    
+    updateCategoryButtons(selectedCategory = null) {
+        const typeSelect = document.getElementById('transactionType');
+        if (!typeSelect) return;
+        
+        const type = typeSelect.value;
+        const categories = Categories.getByType(type);
+        const container = document.getElementById('categoryButtons');
+        
+        if (!container) return;
+        
+        container.innerHTML = categories.map(cat => `
+            <button class="category-btn ${selectedCategory === cat ? 'selected' : ''}" data-category="${cat}">
+                <i class="fas ${Categories.icons[cat]}"></i> ${Categories.translations[cat]}
             </button>
         `).join('');
         
-        document.getElementById('navTabs').innerHTML = navHtml;
-        this.attachEvents();
-    },
-    
-    attachEvents() {
-        document.querySelectorAll('.nav-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const pageId = tab.dataset.page;
-                this.switchPage(pageId);
+        container.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                AppState.ui.selectedCategory = btn.dataset.category;
             });
         });
     },
     
-    switchPage(pageId) {
-        // Оновлюємо активний таб
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        document.querySelector(`.nav-tab[data-page="${pageId}"]`).classList.add('active');
+    saveGoal(id) {
+        const nameInput = document.getElementById('goalName');
+        const currencySelect = document.getElementById('goalCurrency');
+        const targetInput = document.getElementById('goalTarget');
         
-        // Ховаємо всі сторінки
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        if (!nameInput || !currencySelect || !targetInput) return;
         
-        // Показуємо вибрану сторінку
-        const page = document.getElementById(`${pageId}Page`);
-        page.classList.add('active');
+        const name = nameInput.value.trim();
+        const currency = currencySelect.value;
+        const target = parseFloat(targetInput.value);
         
-        // Рендеримо сторінку
-        this.renderPage(pageId);
+        if (!name || isNaN(target) || target <= 0) {
+            return alert('Введіть назву та суму');
+        }
+        
+        if (id) {
+            const goal = AppState.data.goals.find(g => g.id === id);
+            if (goal) {
+                goal.name = name;
+                goal.currency = currency;
+                goal.target = target;
+            }
+        } else {
+            AppState.data.goals.push({
+                id: Helpers.generateId(),
+                name,
+                currency,
+                target,
+                saved: 0,
+                completed: false,
+                history: []
+            });
+        }
+        
+        AppState.save();
+        this.closeModal('goalModal');
+        GoalsPage.render();
     },
     
-    renderPage(pageId) {
-        switch(pageId) {
-            case 'debts': DebtsPage.render(); break;
-            case 'goals': GoalsPage.render(); break;
-            case 'journal': JournalPage.render(); break;
-            case 'bank': BankPage.render(); break;
-            case 'budget': BudgetPage.render(); break;
-            case 'recurring': RecurringPage.render(); break;
-            case 'tips': TipsPage.render(); break;
-            case 'archive': ArchivePage.render(); break;
-            case 'themes': ThemesPage.render(); break;
+    saveTransaction(id) {
+        const currencyInput = document.getElementById('transactionCurrency');
+        const typeSelect = document.getElementById('transactionType');
+        const descInput = document.getElementById('transactionDesc');
+        const amountInput = document.getElementById('transactionAmount');
+        
+        if (!currencyInput || !typeSelect || !descInput || !amountInput) return;
+        
+        const currency = currencyInput.value;
+        const type = typeSelect.value;
+        const desc = descInput.value.trim();
+        const amount = parseFloat(amountInput.value);
+        const category = AppState.ui.selectedCategory;
+        
+        if (!category) return alert('Виберіть категорію');
+        if (isNaN(amount) || amount <= 0) return alert('Введіть коректну суму');
+        
+        if (!AppState.data.transactions[currency]) {
+            AppState.data.transactions[currency] = [];
         }
+        
+        if (id) {
+            const index = AppState.data.transactions[currency].findIndex(t => t.id === id);
+            if (index !== -1) {
+                AppState.data.transactions[currency][index] = {
+                    ...AppState.data.transactions[currency][index],
+                    type,
+                    description: desc || '-',
+                    category,
+                    amount
+                };
+            }
+        } else {
+            AppState.data.transactions[currency].push({
+                id: Helpers.generateId(),
+                type,
+                description: desc || '-',
+                category,
+                amount,
+                date: Date.now(),
+                month: Helpers.getMonthKey(AppState.ui.currentMonth)
+            });
+        }
+        
+        AppState.save();
+        this.closeModal('transactionModal');
+        JournalPage.render();
+    },
+    
+    saveBank(id) {
+        const nameInput = document.getElementById('bankName');
+        const currencySelect = document.getElementById('bankCurrency');
+        const balanceInput = document.getElementById('bankBalance');
+        
+        if (!nameInput || !currencySelect || !balanceInput) return;
+        
+        const name = nameInput.value.trim();
+        const currency = currencySelect.value;
+        const balance = parseFloat(balanceInput.value);
+        
+        if (!name || isNaN(balance)) return alert('Заповніть всі поля');
+        
+        if (id) {
+            const account = AppState.data.bankAccounts.find(a => a.id === id);
+            if (account) {
+                account.name = name;
+                account.currency = currency;
+                account.balance = balance;
+            }
+        } else {
+            AppState.data.bankAccounts.push({
+                id: Helpers.generateId(),
+                name,
+                currency,
+                balance,
+                icon: BankPage.getRandomIcon()
+            });
+        }
+        
+        AppState.save();
+        this.closeModal('bankModal');
+        BankPage.render();
+    },
+    
+    saveRecurring(id) {
+        const nameInput = document.getElementById('recurringName');
+        const amountInput = document.getElementById('recurringAmount');
+        const currencySelect = document.getElementById('recurringCurrency');
+        const frequencySelect = document.getElementById('recurringFrequency');
+        const dayInput = document.getElementById('recurringDay');
+        const categoryInput = document.getElementById('recurringCategory');
+        
+        if (!nameInput || !amountInput || !currencySelect || !frequencySelect || !dayInput || !categoryInput) return;
+        
+        const name = nameInput.value.trim();
+        const amount = parseFloat(amountInput.value);
+        const currency = currencySelect.value;
+        const frequency = frequencySelect.value;
+        const day = dayInput.value;
+        const category = categoryInput.value;
+        
+        if (!name || isNaN(amount) || !day || !category) {
+            return alert('Заповніть всі поля');
+        }
+        
+        const data = { name, amount, currency, frequency, day, category };
+        
+        if (id) {
+            const index = AppState.data.recurringPayments.findIndex(p => p.id === id);
+            if (index !== -1) {
+                AppState.data.recurringPayments[index] = { ...AppState.data.recurringPayments[index], ...data };
+            }
+        } else {
+            AppState.data.recurringPayments.push({
+                id: Helpers.generateId(),
+                ...data
+            });
+        }
+        
+        AppState.save();
+        this.closeModal('recurringModal');
+        RecurringPage.render();
     }
 };
 
-// Функція для оновлення всіх сторінок
+// ========== Глобальна функція оновлення ==========
 window.updateAllPages = function() {
     const activeTab = document.querySelector('.nav-tab.active');
     if (activeTab) {
         Navigation.renderPage(activeTab.dataset.page);
+    }
+};
+
+// ========== Глобальна функція показу індикатора ==========
+window.showRefresh = function() {
+    const indicator = document.getElementById('refreshIndicator');
+    if (indicator) {
+        indicator.classList.add('active');
+        setTimeout(() => indicator.classList.remove('active'), 1000);
     }
 };
