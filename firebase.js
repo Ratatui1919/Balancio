@@ -167,24 +167,3 @@ const FeaturesGrid = {
         container.innerHTML = html;
     }
 };
-
-// ========== RGB ЗМІННІ ДЛЯ ТЕМ ==========
-const updateAccentRGB = () => {
-    const accent = document.body.getAttribute('data-accent') || 'blue';
-    const rgbValues = {
-        blue: '59, 130, 246',
-        green: '16, 185, 129',
-        purple: '139, 92, 246',
-        pink: '236, 72, 153',
-        orange: '249, 115, 22',
-        teal: '20, 184, 166',
-        red: '239, 68, 68',
-        gray: '107, 114, 128',
-        sky: '14, 165, 233'
-    };
-    
-    document.documentElement.style.setProperty('--accent-primary-rgb', rgbValues[accent] || rgbValues.blue);
-};
-
-// Викликаємо при завантаженні
-document.addEventListener('DOMContentLoaded', updateAccentRGB);
