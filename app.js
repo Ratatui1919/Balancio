@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const landingLoginBtn = document.getElementById('landingLoginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const userEmailSpan = document.querySelector('#userEmail span');
+    const refreshIndicator = document.getElementById('refreshIndicator');
     
     FeaturesGrid.render();
     Navigation.render();
@@ -17,6 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedAccent = localStorage.getItem('balancio-accent');
     if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
     if (savedAccent) document.body.setAttribute('data-accent', savedAccent);
+    
+    // Функція для показу індикатора оновлення
+    window.showRefresh = () => {
+        if (refreshIndicator) {
+            refreshIndicator.classList.add('active');
+            setTimeout(() => refreshIndicator.classList.remove('active'), 1000);
+        }
+    };
     
     // Auth listeners
     if (landingLoginBtn) {
