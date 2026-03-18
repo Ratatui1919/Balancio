@@ -254,9 +254,10 @@ const GoalsPage = {
                 </div>
             </div>
 
-            <div class="page-header">
+            <div class="section-header">
                 <h2 class="page-title">
                     <i class="fas fa-rocket"></i> Активні цілі
+                    <span class="section-badge">${activeGoals.length}</span>
                 </h2>
                 <button class="btn btn-primary" onclick="Modals.openGoalModal()">
                     <i class="fas fa-plus"></i> Нова ціль
@@ -269,6 +270,7 @@ const GoalsPage = {
 
             <h2 class="page-title">
                 <i class="fas fa-trophy"></i> Досягнуті цілі
+                <span class="section-badge">${completedGoals.length}</span>
             </h2>
 
             <div class="goals-grid">
@@ -491,7 +493,7 @@ const JournalPage = {
         `;
         
         document.getElementById('journalPage').innerHTML = html;
-        this.updateCharts();
+        setTimeout(() => this.updateCharts(), 100);
     },
     
     renderCurrencyContent(currency, monthKey) {
@@ -583,7 +585,7 @@ const JournalPage = {
     
     renderTransactionsList(transactions, symbol) {
         if (!transactions.length) {
-            return '<tr><td colspan="5" style="text-align:center; padding:30px;">Немає операцій за цей місяць</td></tr>';
+            return '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-tertiary)">Немає операцій за цей місяць</td></tr>';
         }
         
         return transactions.sort((a, b) => (b.date || 0) - (a.date || 0))
@@ -622,14 +624,13 @@ const JournalPage = {
     },
     
     updateCharts() {
-        setTimeout(() => {
-            const monthKey = Helpers.getMonthKey(AppState.ui.currentMonth);
-            ['EUR', 'UAH'].forEach(currency => {
-                const transactions = (AppState.data.transactions[currency] || [])
-                    .filter(t => t.month === monthKey);
-                this.createCharts(currency.toLowerCase(), transactions);
-            });
-        }, 100);
+        const monthKey = Helpers.getMonthKey(AppState.ui.currentMonth);
+        
+        ['EUR', 'UAH'].forEach(currency => {
+            const transactions = (AppState.data.transactions[currency] || [])
+                .filter(t => t.month === monthKey);
+            this.createCharts(currency.toLowerCase(), transactions);
+        });
     },
     
     createCharts(currency, transactions) {
@@ -657,7 +658,11 @@ const JournalPage = {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: Object.keys(expensesByCategory).length > 0, position: 'bottom' }
+                        legend: { 
+                            display: Object.keys(expensesByCategory).length > 0, 
+                            position: 'bottom',
+                            labels: { color: '#9aa4b8' }
+                        }
                     }
                 }
             });
@@ -666,12 +671,12 @@ const JournalPage = {
         const dailyData = {};
         transactions.forEach(t => {
             if (!t.date) return;
-            const date = Helpers.formatDate(t.date);
+            const date = new Date(t.date).getDate();
             if (!dailyData[date]) dailyData[date] = { income: 0, expense: 0 };
             dailyData[date][t.type] += t.amount || 0;
         });
         
-        const sortedDays = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+        const sortedDays = Object.keys(dailyData).sort((a, b) => parseInt(a) - parseInt(b));
         
         const ctx2 = document.getElementById(currency + 'DynamicsChart')?.getContext('2d');
         if (ctx2) {
@@ -680,7 +685,7 @@ const JournalPage = {
             this.charts[currency + 'Dynamics'] = new Chart(ctx2, {
                 type: 'line',
                 data: {
-                    labels: sortedDays,
+                    labels: sortedDays.map(d => d + ' число'),
                     datasets: [
                         { 
                             label: 'Дохід', 
@@ -704,7 +709,15 @@ const JournalPage = {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true }
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#9aa4b8' }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#9aa4b8' }
+                        }
                     }
                 }
             });
@@ -793,7 +806,6 @@ const BudgetPage = {
         const monthName = AppState.ui.currentMonth.toLocaleDateString('uk-UA', { month: 'long', year: 'numeric' });
         const budgetData = AppState.data.budgets[monthKey] || this.getDefaultBudget();
         
-        // Оновлюємо витрати з транзакцій
         this.updateSpent(monthKey);
         
         const html = `
@@ -808,15 +820,15 @@ const BudgetPage = {
 
             <div class="budget-summary">
                 <div class="stat-card">
-                    <div class="stat-title">Загальний бюджет</div>
+                    <div class="stat-title">💰 Загальний бюджет</div>
                     <div class="stat-value">${this.calcTotalBudget(budgetData)} €</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Витрачено</div>
+                    <div class="stat-title">💸 Витрачено</div>
                     <div class="stat-value expense">${this.calcTotalSpent(budgetData)} €</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Залишилось</div>
+                    <div class="stat-title">💎 Залишилось</div>
                     <div class="stat-value ${this.calcRemaining(budgetData) >= 0 ? 'income' : 'expense'}">
                         ${this.calcRemaining(budgetData)} €
                     </div>
@@ -962,7 +974,7 @@ const BudgetPage = {
     }
 };
 
-// ========== RECURRING PAGE ==========
+// ========== RECURRING PAGE (ВИПРАВЛЕНА) ==========
 const RecurringPage = {
     render() {
         const payments = AppState.data.recurringPayments || [];
@@ -985,7 +997,7 @@ const RecurringPage = {
                 <i class="fas fa-calendar-alt"></i> Майбутні платежі
             </h2>
 
-            <div class="recurring-grid">
+            <div class="recurring-grid" id="upcomingPayments">
                 ${this.renderUpcoming(payments)}
             </div>
         `;
@@ -1017,7 +1029,7 @@ const RecurringPage = {
                     <button class="btn-small" onclick="RecurringPage.editPayment('${p.id}')">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-small" onclick="RecurringPage.deletePayment('${p.id}')">
+                    <button class="btn-small btn-danger" onclick="RecurringPage.deletePayment('${p.id}')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -1030,13 +1042,49 @@ const RecurringPage = {
             return '<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>Немає майбутніх платежів</p></div>';
         }
         
-        return payments.slice(0, 3).map(p => {
-            const daysLeft = Math.floor(Math.random() * 10) + 1;
+        const today = new Date();
+        const currentDay = today.getDate();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        
+        const monthlyPayments = payments.filter(p => p.frequency === 'Щомісяця');
+        
+        if (!monthlyPayments.length) {
+            return '<div class="empty-state"><i class="fas fa-calendar-alt"></i><p>Немає щомісячних платежів</p></div>';
+        }
+        
+        const upcoming = monthlyPayments
+            .map(p => {
+                const paymentDay = parseInt(p.day);
+                let daysLeft;
+                
+                if (paymentDay > currentDay) {
+                    daysLeft = paymentDay - currentDay;
+                } else {
+                    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                    daysLeft = (daysInMonth - currentDay) + paymentDay;
+                }
+                
+                return { ...p, daysLeft };
+            })
+            .sort((a, b) => a.daysLeft - b.daysLeft)
+            .slice(0, 5);
+        
+        return upcoming.map(p => {
+            let daysText;
+            if (p.daysLeft === 0) {
+                daysText = 'Сьогодні';
+            } else if (p.daysLeft === 1) {
+                daysText = 'Завтра';
+            } else {
+                daysText = `Через ${p.daysLeft} днів`;
+            }
+            
             return `
                 <div class="recurring-card">
                     <div class="recurring-info">
                         <h4>${Helpers.escape(p.name)}</h4>
-                        <p>Через ${daysLeft} днів</p>
+                        <p>${daysText} (${p.day} число)</p>
                     </div>
                     <div class="recurring-amount">${p.amount} ${Helpers.getSymbol(p.currency)}</div>
                 </div>
@@ -1060,7 +1108,7 @@ const RecurringPage = {
     }
 };
 
-// ========== ANALYTICS PAGE ==========
+// ========== ANALYTICS PAGE (ВИПРАВЛЕНА) ==========
 const AnalyticsPage = {
     charts: {
         pie: null,
@@ -1088,15 +1136,15 @@ const AnalyticsPage = {
 
             <div class="analytics-summary">
                 <div class="stat-card">
-                    <div class="stat-title">Дохід</div>
+                    <div class="stat-title">💰 Дохід</div>
                     <div class="stat-value income" id="analyticsIncome">0 €</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Витрати</div>
+                    <div class="stat-title">💸 Витрати</div>
                     <div class="stat-value expense" id="analyticsExpense">0 €</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Накопичено</div>
+                    <div class="stat-title">💎 Накопичено</div>
                     <div class="stat-value" id="analyticsSaved">0 €</div>
                 </div>
             </div>
@@ -1190,7 +1238,11 @@ const AnalyticsPage = {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: Object.keys(expensesByCategory).length > 0, position: 'bottom' }
+                        legend: { 
+                            display: Object.keys(expensesByCategory).length > 0, 
+                            position: 'bottom',
+                            labels: { color: '#9aa4b8' }
+                        }
                     }
                 }
             });
@@ -1199,12 +1251,12 @@ const AnalyticsPage = {
         const dailyData = {};
         transactions.forEach(t => {
             if (!t.date) return;
-            const date = Helpers.formatDate(t.date);
+            const date = new Date(t.date).getDate();
             if (!dailyData[date]) dailyData[date] = { income: 0, expense: 0 };
             dailyData[date][t.type] += t.amount || 0;
         });
         
-        const sortedDays = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+        const sortedDays = Object.keys(dailyData).sort((a, b) => parseInt(a) - parseInt(b));
         
         const lineCtx = document.getElementById('analyticsLineChart')?.getContext('2d');
         if (lineCtx) {
@@ -1213,7 +1265,7 @@ const AnalyticsPage = {
             this.charts.line = new Chart(lineCtx, {
                 type: 'line',
                 data: {
-                    labels: sortedDays,
+                    labels: sortedDays.map(d => d + ' число'),
                     datasets: [
                         { 
                             label: 'Дохід', 
@@ -1237,7 +1289,15 @@ const AnalyticsPage = {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true }
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#9aa4b8' }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#9aa4b8' }
+                        }
                     }
                 }
             });
@@ -1250,14 +1310,12 @@ const AnalyticsPage = {
         
         const insights = [];
         
-        const avgExpense = transactions.filter(t => t.type === 'expense').length > 0
-            ? expense / transactions.filter(t => t.type === 'expense').length
-            : 0;
-        
-        if (avgExpense > 0) {
+        const expenseTransactions = transactions.filter(t => t.type === 'expense');
+        if (expenseTransactions.length > 0) {
+            const avgExpense = expense / expenseTransactions.length;
             insights.push(`
                 <div class="insight-card">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-receipt"></i>
                     <div>
                         <div class="insight-title">Середній чек</div>
                         <div class="insight-value">${avgExpense.toFixed(2)} €</div>
@@ -1266,8 +1324,7 @@ const AnalyticsPage = {
             `);
         }
         
-        const maxExpense = transactions
-            .filter(t => t.type === 'expense')
+        const maxExpense = expenseTransactions
             .sort((a, b) => (b.amount || 0) - (a.amount || 0))[0];
         
         if (maxExpense) {
@@ -1277,24 +1334,37 @@ const AnalyticsPage = {
                     <div>
                         <div class="insight-title">Найбільша витрата</div>
                         <div class="insight-value">${maxExpense.amount.toFixed(2)} €</div>
-                        <div style="font-size:0.8rem; color:var(--text-tertiary)">${Categories.translations[maxExpense.category]}</div>
+                        <div style="font-size:0.8rem; color:var(--text-tertiary)">${Categories.translations[maxExpense.category] || maxExpense.category}</div>
                     </div>
                 </div>
             `);
         }
         
-        const savingsRate = income > 0 ? ((income - expense) / income * 100).toFixed(0) : 0;
+        if (income > 0) {
+            const savingsRate = ((income - expense) / income * 100).toFixed(0);
+            insights.push(`
+                <div class="insight-card">
+                    <i class="fas fa-piggy-bank"></i>
+                    <div>
+                        <div class="insight-title">Норма заощаджень</div>
+                        <div class="insight-value">${savingsRate}%</div>
+                    </div>
+                </div>
+            `);
+        }
+        
         insights.push(`
             <div class="insight-card">
-                <i class="fas fa-piggy-bank"></i>
+                <i class="fas fa-exchange-alt"></i>
                 <div>
-                    <div class="insight-title">Норма заощаджень</div>
-                    <div class="insight-value">${savingsRate}%</div>
+                    <div class="insight-title">Всього операцій</div>
+                    <div class="insight-value">${transactions.length}</div>
                 </div>
             </div>
         `);
         
-        container.innerHTML = insights.join('');
+        container.innerHTML = insights.length ? insights.join('') : 
+            '<div class="empty-state"><i class="fas fa-chart-line"></i><p>Немає даних за цей місяць</p></div>';
     }
 };
 
@@ -1542,6 +1612,8 @@ const Modals = {
     },
     
     openTransactionModal(currency, transaction = null) {
+        AppState.ui.selectedCategory = transaction?.category || null;
+        
         const modal = document.getElementById('transactionModal');
         modal.innerHTML = `
             <div class="modal-content">
@@ -1815,14 +1887,5 @@ window.updateAllPages = function() {
     const activeTab = document.querySelector('.nav-tab.active');
     if (activeTab) {
         Navigation.renderPage(activeTab.dataset.page);
-    }
-};
-
-// ========== Глобальна функція показу індикатора ==========
-window.showRefresh = function() {
-    const indicator = document.getElementById('refreshIndicator');
-    if (indicator) {
-        indicator.classList.add('active');
-        setTimeout(() => indicator.classList.remove('active'), 1000);
     }
 };
