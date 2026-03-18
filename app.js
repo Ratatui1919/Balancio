@@ -27,7 +27,7 @@ const Modals = {
             <div class="modal-content">
                 <h2><i class="fas fa-exchange-alt"></i> ${transaction ? 'Редагувати' : 'Нова'} операція</h2>
                 <input type="hidden" id="transactionCurrency" value="${currency}">
-                <select class="modal-select" id="transactionType">
+                <select class="modal-select" id="transactionType" onchange="Modals.updateCategoryButtons()">
                     <option value="income" ${transaction?.type === 'income' ? 'selected' : ''}>💰 Дохід</option>
                     <option value="expense" ${transaction?.type === 'expense' ? 'selected' : ''}>💸 Витрата</option>
                 </select>
@@ -118,9 +118,14 @@ const Modals = {
     },
     
     updateCategoryButtons(selectedCategory = null) {
-        const type = document.getElementById('transactionType').value;
+        const typeSelect = document.getElementById('transactionType');
+        if (!typeSelect) return;
+        
+        const type = typeSelect.value;
         const categories = Categories.getByType(type);
         const container = document.getElementById('categoryButtons');
+        
+        if (!container) return;
         
         container.innerHTML = categories.map(cat => `
             <button class="category-btn ${selectedCategory === cat ? 'selected' : ''}" data-category="${cat}">
@@ -138,16 +143,21 @@ const Modals = {
     },
     
     saveGoal(id) {
-        const name = document.getElementById('goalName').value.trim();
-        const currency = document.getElementById('goalCurrency').value;
-        const target = parseFloat(document.getElementById('goalTarget').value);
+        const nameInput = document.getElementById('goalName');
+        const currencySelect = document.getElementById('goalCurrency');
+        const targetInput = document.getElementById('goalTarget');
+        
+        if (!nameInput || !currencySelect || !targetInput) return;
+        
+        const name = nameInput.value.trim();
+        const currency = currencySelect.value;
+        const target = parseFloat(targetInput.value);
         
         if (!name || isNaN(target) || target <= 0) {
             return alert('Введіть назву та суму');
         }
         
         if (id) {
-            // Редагування існуючої цілі
             const goal = AppState.data.goals.find(g => g.id === id);
             if (goal) {
                 goal.name = name;
@@ -155,7 +165,6 @@ const Modals = {
                 goal.target = target;
             }
         } else {
-            // Створення нової цілі
             AppState.data.goals.push({
                 id: Helpers.generateId(),
                 name,
@@ -169,14 +178,23 @@ const Modals = {
         
         AppState.save();
         this.closeModal('goalModal');
-        Navigation.renderPage('goals');
+        if (typeof GoalsPage !== 'undefined') {
+            GoalsPage.render();
+        }
     },
     
     saveTransaction(id) {
-        const currency = document.getElementById('transactionCurrency').value;
-        const type = document.getElementById('transactionType').value;
-        const desc = document.getElementById('transactionDesc').value.trim();
-        const amount = parseFloat(document.getElementById('transactionAmount').value);
+        const currencyInput = document.getElementById('transactionCurrency');
+        const typeSelect = document.getElementById('transactionType');
+        const descInput = document.getElementById('transactionDesc');
+        const amountInput = document.getElementById('transactionAmount');
+        
+        if (!currencyInput || !typeSelect || !descInput || !amountInput) return;
+        
+        const currency = currencyInput.value;
+        const type = typeSelect.value;
+        const desc = descInput.value.trim();
+        const amount = parseFloat(amountInput.value);
         const category = AppState.ui.selectedCategory;
         
         if (!category) return alert('Виберіть категорію');
@@ -187,7 +205,6 @@ const Modals = {
         }
         
         if (id) {
-            // Редагування
             const index = AppState.data.transactions[currency].findIndex(t => t.id === id);
             if (index !== -1) {
                 AppState.data.transactions[currency][index] = {
@@ -199,7 +216,6 @@ const Modals = {
                 };
             }
         } else {
-            // Нова транзакція
             AppState.data.transactions[currency].push({
                 id: Helpers.generateId(),
                 type,
@@ -213,13 +229,21 @@ const Modals = {
         
         AppState.save();
         this.closeModal('transactionModal');
-        Navigation.renderPage('journal');
+        if (typeof JournalPage !== 'undefined') {
+            JournalPage.render();
+        }
     },
     
     saveBank(id) {
-        const name = document.getElementById('bankName').value.trim();
-        const currency = document.getElementById('bankCurrency').value;
-        const balance = parseFloat(document.getElementById('bankBalance').value);
+        const nameInput = document.getElementById('bankName');
+        const currencySelect = document.getElementById('bankCurrency');
+        const balanceInput = document.getElementById('bankBalance');
+        
+        if (!nameInput || !currencySelect || !balanceInput) return;
+        
+        const name = nameInput.value.trim();
+        const currency = currencySelect.value;
+        const balance = parseFloat(balanceInput.value);
         
         if (!name || isNaN(balance)) return alert('Заповніть всі поля');
         
@@ -230,22 +254,40 @@ const Modals = {
                 account.currency = currency;
                 account.balance = balance;
             }
+            AppState.save();
         } else {
-            BankPage.addAccount({ name, currency, balance });
+            AppState.data.bankAccounts.push({
+                id: Helpers.generateId(),
+                name,
+                currency,
+                balance,
+                icon: BankPage.getRandomIcon()
+            });
+            AppState.save();
         }
         
-        AppState.save();
         this.closeModal('bankModal');
-        Navigation.renderPage('bank');
+        if (typeof BankPage !== 'undefined') {
+            BankPage.render();
+        }
     },
     
     saveRecurring(id) {
-        const name = document.getElementById('recurringName').value.trim();
-        const amount = parseFloat(document.getElementById('recurringAmount').value);
-        const currency = document.getElementById('recurringCurrency').value;
-        const frequency = document.getElementById('recurringFrequency').value;
-        const day = document.getElementById('recurringDay').value;
-        const category = document.getElementById('recurringCategory').value;
+        const nameInput = document.getElementById('recurringName');
+        const amountInput = document.getElementById('recurringAmount');
+        const currencySelect = document.getElementById('recurringCurrency');
+        const frequencySelect = document.getElementById('recurringFrequency');
+        const dayInput = document.getElementById('recurringDay');
+        const categoryInput = document.getElementById('recurringCategory');
+        
+        if (!nameInput || !amountInput || !currencySelect || !frequencySelect || !dayInput || !categoryInput) return;
+        
+        const name = nameInput.value.trim();
+        const amount = parseFloat(amountInput.value);
+        const currency = currencySelect.value;
+        const frequency = frequencySelect.value;
+        const day = dayInput.value;
+        const category = categoryInput.value;
         
         if (!name || isNaN(amount) || !day || !category) {
             return alert('Заповніть всі поля');
@@ -254,12 +296,22 @@ const Modals = {
         const data = { name, amount, currency, frequency, day, category };
         
         if (id) {
-            RecurringPage.updatePayment(id, data);
+            const index = AppState.data.recurringPayments.findIndex(p => p.id === id);
+            if (index !== -1) {
+                AppState.data.recurringPayments[index] = { ...AppState.data.recurringPayments[index], ...data };
+            }
         } else {
-            RecurringPage.addPayment(data);
+            AppState.data.recurringPayments.push({
+                id: Helpers.generateId(),
+                ...data
+            });
         }
         
+        AppState.save();
         this.closeModal('recurringModal');
+        if (typeof RecurringPage !== 'undefined') {
+            RecurringPage.render();
+        }
     }
 };
 
@@ -275,6 +327,9 @@ const FeaturesGrid = {
     ],
     
     render() {
+        const container = document.getElementById('featuresGrid');
+        if (!container) return;
+        
         const html = this.items.map(item => `
             <div class="feature-card">
                 <div class="feature-icon"><i class="fas ${item.icon}"></i></div>
@@ -283,12 +338,14 @@ const FeaturesGrid = {
             </div>
         `).join('');
         
-        document.getElementById('featuresGrid').innerHTML = html;
+        container.innerHTML = html;
     }
 };
 
 // ========== INITIALIZATION ==========
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('App initialized');
+    
     // Отримуємо DOM елементи
     const landingPage = document.getElementById('landingPage');
     const mainApp = document.getElementById('mainApp');
@@ -297,8 +354,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const userEmailSpan = document.querySelector('#userEmail span');
     const refreshIndicator = document.getElementById('refreshIndicator');
     
+    // Перевіряємо чи всі елементи знайдені
+    console.log('Elements found:', { 
+        landingPage: !!landingPage, 
+        mainApp: !!mainApp, 
+        landingLoginBtn: !!landingLoginBtn,
+        logoutBtn: !!logoutBtn,
+        userEmailSpan: !!userEmailSpan
+    });
+    
     FeaturesGrid.render();
-    Navigation.render();
+    
+    if (typeof Navigation !== 'undefined') {
+        Navigation.render();
+    }
     
     // Завантажуємо збережену тему
     const savedTheme = localStorage.getItem('balancio-theme');
@@ -317,27 +386,38 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth listeners
     if (landingLoginBtn) {
         landingLoginBtn.addEventListener('click', () => {
-            // Використовуємо redirect замість popup для уникнення Cross-Origin помилок
-            auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+            console.log('Login button clicked');
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(result => {
+                    console.log('Login successful:', result.user.email);
+                })
+                .catch(error => {
+                    console.error('Login error:', error);
+                    alert('Помилка входу: ' + error.message);
+                });
         });
     }
     
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => auth.signOut());
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                console.log('Logged out');
+            });
+        });
     }
     
-    // Обробка редиректу
-    auth.getRedirectResult().catch(error => {
-        console.error('Redirect sign-in error:', error);
-    });
-    
     auth.onAuthStateChanged(user => {
+        console.log('Auth state changed:', user ? 'Logged in as ' + user.email : 'Logged out');
+        
         if (user) {
             AppState.user = user;
             if (userEmailSpan) userEmailSpan.textContent = user.email;
             if (landingPage) landingPage.style.display = 'none';
             if (mainApp) mainApp.style.display = 'block';
-            AppState.load(user.uid);
+            if (typeof AppState.load === 'function') {
+                AppState.load(user.uid);
+            }
         } else {
             AppState.user = null;
             if (landingPage) landingPage.style.display = 'block';
@@ -347,15 +427,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Експортуємо все в глобальний об'єкт window
-window.Helpers = Helpers;
-window.AppState = AppState;
 window.Modals = Modals;
-window.DebtsPage = DebtsPage;
-window.GoalsPage = GoalsPage;
-window.JournalPage = JournalPage;
-window.BankPage = BankPage;
-window.RecurringPage = RecurringPage;
-window.BudgetPage = BudgetPage;
-window.TipsPage = TipsPage;
-window.ArchivePage = ArchivePage;
-window.ThemesPage = ThemesPage;
+window.FeaturesGrid = FeaturesGrid;
